@@ -1,0 +1,162 @@
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/CortexM0/ARM_GCC_541/Debug/main.o : D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/ADC_SAR_Seq_1.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/ADC_SAR_Seq_1_IRQ.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/ADC_SAR_Seq_1_intClock.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Counter_Spd.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/CtrlReg_Dir.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/CtrlReg_PWMOut.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/CyFlash.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/CyLFClk.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/CyLib.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Hall1.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Hall1_aliases.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Hall2.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Hall2_aliases.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Hall3.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Hall3_aliases.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Hall_Error.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/IDAC_Iref.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/LPComp_OC.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMAH.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMAH_aliases.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMAL.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMAL_aliases.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMBH.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMBH_aliases.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMBL.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMBL_aliases.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMCH.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMCH_aliases.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMCL.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMCL_aliases.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWM_Drive.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Pin_Ibus.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Pin_Ibus_aliases.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Pin_Iref.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Pin_Iref_aliases.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/STATUS_LED.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/STATUS_LED_aliases.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/SW2.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/SW2_aliases.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Timer_1.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_BOOT.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_PINS.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_PVT.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_SCBCLK.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_SPI_UART.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_SPI_UART_PVT.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_rx.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_rx_aliases.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_tx.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_tx_aliases.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Vbus.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Vbus_aliases.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Vrpm.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Vrpm_aliases.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/clock_1.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/clock_2.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cmsis_armcc.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cmsis_compiler.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cmsis_gcc.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/core_cm0.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/core_cm0_psoc4.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cyPm.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cy_em_eeprom.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cydevice_trm.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cydisabledsheets.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cyfitter.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cyfitter_cfg.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cypins.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cytypes.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/isr_oc.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/isr_pwm.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/isr_spd.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/isr_timeMeasurementForSpeed.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/project.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/getvalue.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/main.c D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/motor.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/speed.h D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/userinterface.h 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/ADC_SAR_Seq_1.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/ADC_SAR_Seq_1_IRQ.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/ADC_SAR_Seq_1_intClock.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Counter_Spd.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/CtrlReg_Dir.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/CtrlReg_PWMOut.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/CyFlash.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/CyLFClk.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/CyLib.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Hall1.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Hall1_aliases.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Hall2.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Hall2_aliases.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Hall3.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Hall3_aliases.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Hall_Error.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/IDAC_Iref.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/LPComp_OC.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMAH.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMAH_aliases.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMAL.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMAL_aliases.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMBH.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMBH_aliases.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMBL.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMBL_aliases.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMCH.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMCH_aliases.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMCL.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWMCL_aliases.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/PWM_Drive.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Pin_Ibus.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Pin_Ibus_aliases.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Pin_Iref.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Pin_Iref_aliases.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/STATUS_LED.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/STATUS_LED_aliases.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/SW2.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/SW2_aliases.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Timer_1.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_BOOT.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_PINS.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_PVT.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_SCBCLK.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_SPI_UART.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_SPI_UART_PVT.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_rx.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_rx_aliases.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_tx.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/UART_BCP_tx_aliases.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Vbus.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Vbus_aliases.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Vrpm.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/Vrpm_aliases.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/clock_1.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/clock_2.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cmsis_armcc.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cmsis_compiler.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cmsis_gcc.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/core_cm0.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/core_cm0_psoc4.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cyPm.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cy_em_eeprom.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cydevice_trm.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cydisabledsheets.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cyfitter.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cyfitter_cfg.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cypins.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/cytypes.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/isr_oc.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/isr_pwm.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/isr_spd.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/isr_timeMeasurementForSpeed.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/Generated_Source/PSoC4/project.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/getvalue.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/main.c : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/motor.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/speed.h : 
+
+D:/Sensored\ BLDC\ Motor\ Control/control_v3.cydsn/userinterface.h : 
+

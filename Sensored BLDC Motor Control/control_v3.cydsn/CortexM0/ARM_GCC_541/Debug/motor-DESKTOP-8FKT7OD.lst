@@ -1,0 +1,1706 @@
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"motor.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	UI_Cmd,1,4
+  20              		.comm	UI_Data,18,4
+  21              		.global	gearRatio
+  22              		.data
+  23              		.align	1
+  24              		.type	gearRatio, %object
+  25              		.size	gearRatio, 2
+  26              	gearRatio:
+  27 0000 6400     		.short	100
+  28              		.global	speedRef
+  29              		.bss
+  30              		.align	1
+  31              		.type	speedRef, %object
+  32              		.size	speedRef, 2
+  33              	speedRef:
+  34 0000 0000     		.space	2
+  35              		.global	speedCur
+  36              		.data
+  37              		.align	1
+  38              		.type	speedCur, %object
+  39              		.size	speedCur, 2
+  40              	speedCur:
+  41 0002 B80B     		.short	3000
+  42              		.global	preSpeedCur
+  43              		.bss
+  44              		.align	1
+  45              		.type	preSpeedCur, %object
+  46              		.size	preSpeedCur, 2
+  47              	preSpeedCur:
+  48 0002 0000     		.space	2
+  49              		.global	preCntCaptur
+  50              		.data
+  51              		.align	1
+  52              		.type	preCntCaptur, %object
+  53              		.size	preCntCaptur, 2
+  54              	preCntCaptur:
+  55 0004 3075     		.short	30000
+  56              		.global	dutyCycle
+  57              		.bss
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 2
+
+
+  58              		.type	dutyCycle, %object
+  59              		.size	dutyCycle, 1
+  60              	dutyCycle:
+  61 0004 00       		.space	1
+  62              		.global	pwmCnt
+  63 0005 00       		.align	1
+  64              		.type	pwmCnt, %object
+  65              		.size	pwmCnt, 2
+  66              	pwmCnt:
+  67 0006 0000     		.space	2
+  68              		.global	firstRun
+  69              		.data
+  70              		.type	firstRun, %object
+  71              		.size	firstRun, 1
+  72              	firstRun:
+  73 0006 01       		.byte	1
+  74              		.global	ocBlankCnt
+  75              		.bss
+  76              		.type	ocBlankCnt, %object
+  77              		.size	ocBlankCnt, 1
+  78              	ocBlankCnt:
+  79 0008 00       		.space	1
+  80              		.global	errorState
+  81              		.type	errorState, %object
+  82              		.size	errorState, 1
+  83              	errorState:
+  84 0009 00       		.space	1
+  85              		.global	stateSys
+  86              		.data
+  87              		.type	stateSys, %object
+  88              		.size	stateSys, 1
+  89              	stateSys:
+  90 0007 02       		.byte	2
+  91              		.section	.text.pwm_isr,"ax",%progbits
+  92              		.align	2
+  93              		.global	pwm_isr
+  94              		.code	16
+  95              		.thumb_func
+  96              		.type	pwm_isr, %function
+  97              	pwm_isr:
+  98              	.LFB32:
+  99              		.file 1 "motor.c"
+   1:motor.c       **** /*******************************************************************************
+   2:motor.c       **** * Project Name		: Sensored BLDC Motor Control
+   3:motor.c       **** * File Name			: motor.c
+   4:motor.c       **** * Version			: 1.0
+   5:motor.c       **** * Device Used		: CY8C4245AXI-483     
+   6:motor.c       **** * Software Used		: PSoC Creator 4.2
+   7:motor.c       **** * Compiler Used		: ARM GCC 5.4.1 
+   8:motor.c       **** * Related Hardware  : CY8CKIT-042 PSoC 4 Pioneer Kit + CY8CKIT-037 PSoC 4
+   9:motor.c       **** *                     Motor Control Evaluation Kit
+  10:motor.c       **** ******************************************************************************
+  11:motor.c       **** * Copyright (2018), Cypress Semiconductor Corporation. All rights reserved.
+  12:motor.c       **** *******************************************************************************
+  13:motor.c       **** * This software, including source code, documentation and related materials
+  14:motor.c       **** * (“Software”), is owned by Cypress Semiconductor Corporation or one of its
+  15:motor.c       **** * subsidiaries (“Cypress”) and is protected by and subject to worldwide patent
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 3
+
+
+  16:motor.c       **** * protection (United States and foreign), United States copyright laws and
+  17:motor.c       **** * international treaty provisions. Therefore, you may use this Software only
+  18:motor.c       **** * as provided in the license agreement accompanying the software package from
+  19:motor.c       **** * which you obtained this Software (“EULA”).
+  20:motor.c       **** *
+  21:motor.c       **** * If no EULA applies, Cypress hereby grants you a personal, nonexclusive,
+  22:motor.c       **** * non-transferable license to copy, modify, and compile the Software source
+  23:motor.c       **** * code solely for use in connection with Cypress’s integrated circuit products.
+  24:motor.c       **** * Any reproduction, modification, translation, compilation, or representation
+  25:motor.c       **** * of this Software except as specified above is prohibited without the express
+  26:motor.c       **** * written permission of Cypress.
+  27:motor.c       **** *
+  28:motor.c       **** * Disclaimer: THIS SOFTWARE IS PROVIDED AS-IS, WITH NO WARRANTY OF ANY KIND, 
+  29:motor.c       **** * EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, NONINFRINGEMENT, IMPLIED 
+  30:motor.c       **** * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. Cypress 
+  31:motor.c       **** * reserves the right to make changes to the Software without notice. Cypress 
+  32:motor.c       **** * does not assume any liability arising out of the application or use of the 
+  33:motor.c       **** * Software or any product or circuit described in the Software. Cypress does 
+  34:motor.c       **** * not authorize its products for use in any products where a malfunction or 
+  35:motor.c       **** * failure of the Cypress product may reasonably be expected to result in 
+  36:motor.c       **** * significant property damage, injury or death (“High Risk Product”). By 
+  37:motor.c       **** * including Cypress’s product in a High Risk Product, the manufacturer of such 
+  38:motor.c       **** * system or application assumes all risk of such use and in doing so agrees to 
+  39:motor.c       **** * indemnify Cypress against all liability.
+  40:motor.c       **** *******************************************************************************/
+  41:motor.c       **** #include <project.h>
+  42:motor.c       **** #include "motor.h"
+  43:motor.c       **** #include "userinterface.h"
+  44:motor.c       **** #include "getvalue.h"
+  45:motor.c       **** 
+  46:motor.c       **** /* UI_MOTOR_STATUS Status */
+  47:motor.c       **** UI_CMD  UI_Cmd;
+  48:motor.c       **** UI_DATA UI_Data;
+  49:motor.c       **** 
+  50:motor.c       **** uint16 gearRatio = 100;         /* :1 gearRatio */
+  51:motor.c       **** uint16 speedRef = 0;            /* Motor speed Reference */
+  52:motor.c       **** uint16 speedCur = 3000;         /* Current motor speed. */
+  53:motor.c       **** 
+  54:motor.c       **** uint16 preSpeedCur = 0;
+  55:motor.c       **** uint16 preCntCaptur = 30000;
+  56:motor.c       **** 
+  57:motor.c       **** uint8  dutyCycle = 0;            /* really now used as BYTE since use 8-bit PWM */
+  58:motor.c       **** uint16 pwmCnt = 0;
+  59:motor.c       **** uint8 firstRun = 1;
+  60:motor.c       **** uint8 ocBlankCnt = 0;
+  61:motor.c       **** Error_T errorState = no_error;
+  62:motor.c       **** uint8 stateSys = STATUS_STOP;
+  63:motor.c       **** 
+  64:motor.c       **** /*******************************************************************************
+  65:motor.c       **** * Function Name: pwm_isr
+  66:motor.c       **** ********************************************************************************
+  67:motor.c       **** *
+  68:motor.c       **** * Summary:
+  69:motor.c       **** * This function is PWM ISR. When TC happens, it increases PWM ticker, clears flag and 
+  70:motor.c       **** * enables over current protection ISR after startup.
+  71:motor.c       **** *
+  72:motor.c       **** * Parameters: None
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 4
+
+
+  73:motor.c       **** *
+  74:motor.c       **** * Return: None
+  75:motor.c       **** *
+  76:motor.c       **** *******************************************************************************/
+  77:motor.c       **** CY_ISR(pwm_isr)
+  78:motor.c       **** {	
+ 100              		.loc 1 78 0
+ 101              		.cfi_startproc
+ 102              		@ args = 0, pretend = 0, frame = 0
+ 103              		@ frame_needed = 1, uses_anonymous_args = 0
+ 104 0000 80B5     		push	{r7, lr}
+ 105              		.cfi_def_cfa_offset 8
+ 106              		.cfi_offset 7, -8
+ 107              		.cfi_offset 14, -4
+ 108 0002 00AF     		add	r7, sp, #0
+ 109              		.cfi_def_cfa_register 7
+  79:motor.c       **** 	pwmCnt++;  
+ 110              		.loc 1 79 0
+ 111 0004 184B     		ldr	r3, .L5
+ 112 0006 1B88     		ldrh	r3, [r3]
+ 113 0008 0133     		adds	r3, r3, #1
+ 114 000a 9AB2     		uxth	r2, r3
+ 115 000c 164B     		ldr	r3, .L5
+ 116 000e 1A80     		strh	r2, [r3]
+  80:motor.c       **** 	
+  81:motor.c       ****     /* Avoid the current pulse interference in motor start-up*/
+  82:motor.c       ****     if (UI_Cmd.run)
+ 117              		.loc 1 82 0
+ 118 0010 164B     		ldr	r3, .L5+4
+ 119 0012 1B78     		ldrb	r3, [r3]
+ 120 0014 002B     		cmp	r3, #0
+ 121 0016 17D0     		beq	.L2
+  83:motor.c       ****     {
+  84:motor.c       ****         if(firstRun == 1)
+ 122              		.loc 1 84 0
+ 123 0018 154B     		ldr	r3, .L5+8
+ 124 001a 1B78     		ldrb	r3, [r3]
+ 125 001c 012B     		cmp	r3, #1
+ 126 001e 05D1     		bne	.L3
+  85:motor.c       ****         {
+  86:motor.c       ****             ocBlankCnt++;
+ 127              		.loc 1 86 0
+ 128 0020 144B     		ldr	r3, .L5+12
+ 129 0022 1B78     		ldrb	r3, [r3]
+ 130 0024 0133     		adds	r3, r3, #1
+ 131 0026 DAB2     		uxtb	r2, r3
+ 132 0028 124B     		ldr	r3, .L5+12
+ 133 002a 1A70     		strb	r2, [r3]
+ 134              	.L3:
+  87:motor.c       ****         }
+  88:motor.c       ****         if (ocBlankCnt > 2)    /*Ignore the first 2 PWM period = 50uS*3=150uS, then enable over cur
+ 135              		.loc 1 88 0
+ 136 002c 114B     		ldr	r3, .L5+12
+ 137 002e 1B78     		ldrb	r3, [r3]
+ 138 0030 022B     		cmp	r3, #2
+ 139 0032 09D9     		bls	.L2
+  89:motor.c       ****         {
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 5
+
+
+  90:motor.c       ****             firstRun = 0;
+ 140              		.loc 1 90 0
+ 141 0034 0E4B     		ldr	r3, .L5+8
+ 142 0036 0022     		movs	r2, #0
+ 143 0038 1A70     		strb	r2, [r3]
+  91:motor.c       ****             ocBlankCnt = 0;
+ 144              		.loc 1 91 0
+ 145 003a 0E4B     		ldr	r3, .L5+12
+ 146 003c 0022     		movs	r2, #0
+ 147 003e 1A70     		strb	r2, [r3]
+  92:motor.c       ****             isr_oc_Enable();
+ 148              		.loc 1 92 0
+ 149 0040 FFF7FEFF 		bl	isr_oc_Enable
+  93:motor.c       ****             isr_oc_ClearPending();
+ 150              		.loc 1 93 0
+ 151 0044 FFF7FEFF 		bl	isr_oc_ClearPending
+ 152              	.L2:
+  94:motor.c       ****         }
+  95:motor.c       ****     }
+  96:motor.c       **** 	
+  97:motor.c       **** 	/* Calculate the real time motor speed every 2000 PWM period*/
+  98:motor.c       **** 	if(pwmCnt >= 2001)
+ 153              		.loc 1 98 0
+ 154 0048 074B     		ldr	r3, .L5
+ 155 004a 1A88     		ldrh	r2, [r3]
+ 156 004c FA23     		movs	r3, #250
+ 157 004e DB00     		lsls	r3, r3, #3
+ 158 0050 9A42     		cmp	r2, r3
+ 159 0052 02D9     		bls	.L4
+  99:motor.c       **** 	{
+ 100:motor.c       **** 		pwmCnt = 0;
+ 160              		.loc 1 100 0
+ 161 0054 044B     		ldr	r3, .L5
+ 162 0056 0022     		movs	r2, #0
+ 163 0058 1A80     		strh	r2, [r3]
+ 164              	.L4:
+ 101:motor.c       **** 	}
+ 102:motor.c       **** 
+ 103:motor.c       **** 	PWM_Drive_ClearInterrupt(PWM_Drive_INTR_MASK_TC);
+ 165              		.loc 1 103 0
+ 166 005a 0120     		movs	r0, #1
+ 167 005c FFF7FEFF 		bl	PWM_Drive_ClearInterrupt
+ 104:motor.c       **** }
+ 168              		.loc 1 104 0
+ 169 0060 C046     		nop
+ 170 0062 BD46     		mov	sp, r7
+ 171              		@ sp needed
+ 172 0064 80BD     		pop	{r7, pc}
+ 173              	.L6:
+ 174 0066 C046     		.align	2
+ 175              	.L5:
+ 176 0068 00000000 		.word	pwmCnt
+ 177 006c 00000000 		.word	UI_Cmd
+ 178 0070 00000000 		.word	firstRun
+ 179 0074 00000000 		.word	ocBlankCnt
+ 180              		.cfi_endproc
+ 181              	.LFE32:
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 6
+
+
+ 182              		.size	pwm_isr, .-pwm_isr
+ 183              		.section	.text.speed_measure_isr,"ax",%progbits
+ 184              		.align	2
+ 185              		.global	speed_measure_isr
+ 186              		.code	16
+ 187              		.thumb_func
+ 188              		.type	speed_measure_isr, %function
+ 189              	speed_measure_isr:
+ 190              	.LFB33:
+ 105:motor.c       **** 
+ 106:motor.c       **** /*******************************************************************************
+ 107:motor.c       **** * Function Name: speed_measure_isr
+ 108:motor.c       **** ********************************************************************************
+ 109:motor.c       **** *
+ 110:motor.c       **** * Summary:
+ 111:motor.c       **** * This function is ISR for motor speed measurement. 
+ 112:motor.c       **** * 
+ 113:motor.c       **** * Parameters: None
+ 114:motor.c       **** *
+ 115:motor.c       **** * Return: None
+ 116:motor.c       **** *
+ 117:motor.c       **** *******************************************************************************/
+ 118:motor.c       **** CY_ISR(speed_measure_isr)
+ 119:motor.c       **** {
+ 191              		.loc 1 119 0
+ 192              		.cfi_startproc
+ 193              		@ args = 0, pretend = 0, frame = 8
+ 194              		@ frame_needed = 1, uses_anonymous_args = 0
+ 195 0000 80B5     		push	{r7, lr}
+ 196              		.cfi_def_cfa_offset 8
+ 197              		.cfi_offset 7, -8
+ 198              		.cfi_offset 14, -4
+ 199 0002 82B0     		sub	sp, sp, #8
+ 200              		.cfi_def_cfa_offset 16
+ 201 0004 00AF     		add	r7, sp, #0
+ 202              		.cfi_def_cfa_register 7
+ 120:motor.c       ****     uint16 cntCaptur = 0;
+ 203              		.loc 1 120 0
+ 204 0006 BB1D     		adds	r3, r7, #6
+ 205 0008 0022     		movs	r2, #0
+ 206 000a 1A80     		strh	r2, [r3]
+ 121:motor.c       ****     
+ 122:motor.c       ****     cntCaptur = Counter_Spd_ReadCapture();
+ 207              		.loc 1 122 0
+ 208 000c FFF7FEFF 		bl	Counter_Spd_ReadCapture
+ 209 0010 0200     		movs	r2, r0
+ 210 0012 BB1D     		adds	r3, r7, #6
+ 211 0014 1A80     		strh	r2, [r3]
+ 123:motor.c       **** 	
+ 124:motor.c       **** 	speedCur = preCntCaptur - cntCaptur;
+ 212              		.loc 1 124 0
+ 213 0016 144B     		ldr	r3, .L8
+ 214 0018 1A88     		ldrh	r2, [r3]
+ 215 001a BB1D     		adds	r3, r7, #6
+ 216 001c 1B88     		ldrh	r3, [r3]
+ 217 001e D31A     		subs	r3, r2, r3
+ 218 0020 9AB2     		uxth	r2, r3
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 7
+
+
+ 219 0022 124B     		ldr	r3, .L8+4
+ 220 0024 1A80     		strh	r2, [r3]
+ 125:motor.c       **** 	
+ 126:motor.c       **** 	/* If speed is too low, Regard motor is stopped*/
+ 127:motor.c       ****     /* if(speedCur > 5000)	*/	/* < 300Rpm*/
+ 128:motor.c       **** 	/*	speedCur = 5000;  */
+ 129:motor.c       **** 	
+ 130:motor.c       ****     /* filter for speed measured */
+ 131:motor.c       ****     speedCur = (preSpeedCur >> 2) + (preSpeedCur >> 1) + (speedCur >> 2);	
+ 221              		.loc 1 131 0
+ 222 0026 124B     		ldr	r3, .L8+8
+ 223 0028 1B88     		ldrh	r3, [r3]
+ 224 002a 9B08     		lsrs	r3, r3, #2
+ 225 002c 9AB2     		uxth	r2, r3
+ 226 002e 104B     		ldr	r3, .L8+8
+ 227 0030 1B88     		ldrh	r3, [r3]
+ 228 0032 5B08     		lsrs	r3, r3, #1
+ 229 0034 9BB2     		uxth	r3, r3
+ 230 0036 D318     		adds	r3, r2, r3
+ 231 0038 9AB2     		uxth	r2, r3
+ 232 003a 0C4B     		ldr	r3, .L8+4
+ 233 003c 1B88     		ldrh	r3, [r3]
+ 234 003e 9B08     		lsrs	r3, r3, #2
+ 235 0040 9BB2     		uxth	r3, r3
+ 236 0042 D318     		adds	r3, r2, r3
+ 237 0044 9AB2     		uxth	r2, r3
+ 238 0046 094B     		ldr	r3, .L8+4
+ 239 0048 1A80     		strh	r2, [r3]
+ 132:motor.c       **** 	
+ 133:motor.c       ****     preCntCaptur = cntCaptur;
+ 240              		.loc 1 133 0
+ 241 004a 074B     		ldr	r3, .L8
+ 242 004c BA1D     		adds	r2, r7, #6
+ 243 004e 1288     		ldrh	r2, [r2]
+ 244 0050 1A80     		strh	r2, [r3]
+ 134:motor.c       **** 	preSpeedCur = speedCur; 
+ 245              		.loc 1 134 0
+ 246 0052 064B     		ldr	r3, .L8+4
+ 247 0054 1A88     		ldrh	r2, [r3]
+ 248 0056 064B     		ldr	r3, .L8+8
+ 249 0058 1A80     		strh	r2, [r3]
+ 135:motor.c       **** 	
+ 136:motor.c       **** 	Counter_Spd_ClearInterrupt(Counter_Spd_INTR_MASK_CC_MATCH);
+ 250              		.loc 1 136 0
+ 251 005a 0220     		movs	r0, #2
+ 252 005c FFF7FEFF 		bl	Counter_Spd_ClearInterrupt
+ 137:motor.c       **** }
+ 253              		.loc 1 137 0
+ 254 0060 C046     		nop
+ 255 0062 BD46     		mov	sp, r7
+ 256 0064 02B0     		add	sp, sp, #8
+ 257              		@ sp needed
+ 258 0066 80BD     		pop	{r7, pc}
+ 259              	.L9:
+ 260              		.align	2
+ 261              	.L8:
+ 262 0068 00000000 		.word	preCntCaptur
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 8
+
+
+ 263 006c 00000000 		.word	speedCur
+ 264 0070 00000000 		.word	preSpeedCur
+ 265              		.cfi_endproc
+ 266              	.LFE33:
+ 267              		.size	speed_measure_isr, .-speed_measure_isr
+ 268              		.section	.text.over_current_isr,"ax",%progbits
+ 269              		.align	2
+ 270              		.global	over_current_isr
+ 271              		.code	16
+ 272              		.thumb_func
+ 273              		.type	over_current_isr, %function
+ 274              	over_current_isr:
+ 275              	.LFB34:
+ 138:motor.c       **** 
+ 139:motor.c       **** /*******************************************************************************
+ 140:motor.c       **** * Function Name: over_current_isr
+ 141:motor.c       **** ********************************************************************************
+ 142:motor.c       **** *
+ 143:motor.c       **** * Summary:
+ 144:motor.c       **** * This function is ISR for over current protection. It updates the error state flag. 
+ 145:motor.c       **** * 
+ 146:motor.c       **** * Parameters: None
+ 147:motor.c       **** *
+ 148:motor.c       **** * Return: None
+ 149:motor.c       **** *
+ 150:motor.c       **** *******************************************************************************/
+ 151:motor.c       **** CY_ISR(over_current_isr)
+ 152:motor.c       **** {	
+ 276              		.loc 1 152 0
+ 277              		.cfi_startproc
+ 278              		@ args = 0, pretend = 0, frame = 0
+ 279              		@ frame_needed = 1, uses_anonymous_args = 0
+ 280 0000 80B5     		push	{r7, lr}
+ 281              		.cfi_def_cfa_offset 8
+ 282              		.cfi_offset 7, -8
+ 283              		.cfi_offset 14, -4
+ 284 0002 00AF     		add	r7, sp, #0
+ 285              		.cfi_def_cfa_register 7
+ 153:motor.c       ****     UpdateStatusError();		/* If over current happens, stop motor*/
+ 286              		.loc 1 153 0
+ 287 0004 FFF7FEFF 		bl	UpdateStatusError
+ 154:motor.c       ****     errorState = overCur;
+ 288              		.loc 1 154 0
+ 289 0008 044B     		ldr	r3, .L11
+ 290 000a 0122     		movs	r2, #1
+ 291 000c 1A70     		strb	r2, [r3]
+ 155:motor.c       ****     LPComp_OC_ClearInterrupt(LPComp_OC_INTR_RISING);
+ 292              		.loc 1 155 0
+ 293 000e 0120     		movs	r0, #1
+ 294 0010 FFF7FEFF 		bl	LPComp_OC_ClearInterrupt
+ 156:motor.c       **** }
+ 295              		.loc 1 156 0
+ 296 0014 C046     		nop
+ 297 0016 BD46     		mov	sp, r7
+ 298              		@ sp needed
+ 299 0018 80BD     		pop	{r7, pc}
+ 300              	.L12:
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 9
+
+
+ 301 001a C046     		.align	2
+ 302              	.L11:
+ 303 001c 00000000 		.word	errorState
+ 304              		.cfi_endproc
+ 305              	.LFE34:
+ 306              		.size	over_current_isr, .-over_current_isr
+ 307              		.section	.text.Init_UI_FW,"ax",%progbits
+ 308              		.align	2
+ 309              		.global	Init_UI_FW
+ 310              		.code	16
+ 311              		.thumb_func
+ 312              		.type	Init_UI_FW, %function
+ 313              	Init_UI_FW:
+ 314              	.LFB35:
+ 157:motor.c       **** 
+ 158:motor.c       **** /*******************************************************************************
+ 159:motor.c       **** * Function Name: Init_UI_FW
+ 160:motor.c       **** ********************************************************************************
+ 161:motor.c       **** * Summary: This function initializes parameters used in motor running.
+ 162:motor.c       **** *  
+ 163:motor.c       **** * Parameters: None  
+ 164:motor.c       **** *
+ 165:motor.c       **** * Return: None
+ 166:motor.c       **** *  
+ 167:motor.c       **** *******************************************************************************/
+ 168:motor.c       **** 
+ 169:motor.c       **** void Init_UI_FW(void)
+ 170:motor.c       **** {
+ 315              		.loc 1 170 0
+ 316              		.cfi_startproc
+ 317              		@ args = 0, pretend = 0, frame = 0
+ 318              		@ frame_needed = 1, uses_anonymous_args = 0
+ 319 0000 80B5     		push	{r7, lr}
+ 320              		.cfi_def_cfa_offset 8
+ 321              		.cfi_offset 7, -8
+ 322              		.cfi_offset 14, -4
+ 323 0002 00AF     		add	r7, sp, #0
+ 324              		.cfi_def_cfa_register 7
+ 171:motor.c       ****     /* Setting UI Initial parameter*/
+ 172:motor.c       **** 	UI_Data.Dir = CLOCK_WISE;				
+ 325              		.loc 1 172 0
+ 326 0004 0E4B     		ldr	r3, .L14
+ 327 0006 0022     		movs	r2, #0
+ 328 0008 1A70     		strb	r2, [r3]
+ 173:motor.c       ****     UI_Data.maxSpeedRpm = 4000;
+ 329              		.loc 1 173 0
+ 330 000a 0D4B     		ldr	r3, .L14
+ 331 000c FA22     		movs	r2, #250
+ 332 000e 1201     		lsls	r2, r2, #4
+ 333 0010 9A81     		strh	r2, [r3, #12]
+ 174:motor.c       ****     UI_Data.minSpeedRpm = 500;
+ 334              		.loc 1 174 0
+ 335 0012 0B4B     		ldr	r3, .L14
+ 336 0014 FA22     		movs	r2, #250
+ 337 0016 5200     		lsls	r2, r2, #1
+ 338 0018 DA81     		strh	r2, [r3, #14]
+ 175:motor.c       ****     UI_Data.speedRpmRef = 2;
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 10
+
+
+ 339              		.loc 1 175 0
+ 340 001a 094B     		ldr	r3, .L14
+ 341 001c 0222     		movs	r2, #2
+ 342 001e DA80     		strh	r2, [r3, #6]
+ 176:motor.c       ****     UI_Data.polePairs = 4;
+ 343              		.loc 1 176 0
+ 344 0020 074B     		ldr	r3, .L14
+ 345 0022 0422     		movs	r2, #4
+ 346 0024 1A74     		strb	r2, [r3, #16]
+ 177:motor.c       ****     UI_Data.maxCurr = MAX_CURR_MEDIUM; 
+ 347              		.loc 1 177 0
+ 348 0026 064B     		ldr	r3, .L14
+ 349 0028 4B22     		movs	r2, #75
+ 350 002a 5A74     		strb	r2, [r3, #17]
+ 178:motor.c       ****     UI_Data.kp = 500;
+ 351              		.loc 1 178 0
+ 352 002c 044B     		ldr	r3, .L14
+ 353 002e FA22     		movs	r2, #250
+ 354 0030 5200     		lsls	r2, r2, #1
+ 355 0032 1A81     		strh	r2, [r3, #8]
+ 179:motor.c       ****     UI_Data.ki = 50;
+ 356              		.loc 1 179 0
+ 357 0034 024B     		ldr	r3, .L14
+ 358 0036 3222     		movs	r2, #50
+ 359 0038 5A81     		strh	r2, [r3, #10]
+ 180:motor.c       **** 	
+ 181:motor.c       **** }
+ 360              		.loc 1 181 0
+ 361 003a C046     		nop
+ 362 003c BD46     		mov	sp, r7
+ 363              		@ sp needed
+ 364 003e 80BD     		pop	{r7, pc}
+ 365              	.L15:
+ 366              		.align	2
+ 367              	.L14:
+ 368 0040 00000000 		.word	UI_Data
+ 369              		.cfi_endproc
+ 370              	.LFE35:
+ 371              		.size	Init_UI_FW, .-Init_UI_FW
+ 372              		.section	.text.Init_HW,"ax",%progbits
+ 373              		.align	2
+ 374              		.global	Init_HW
+ 375              		.code	16
+ 376              		.thumb_func
+ 377              		.type	Init_HW, %function
+ 378              	Init_HW:
+ 379              	.LFB36:
+ 182:motor.c       **** 
+ 183:motor.c       **** 
+ 184:motor.c       **** /*******************************************************************************
+ 185:motor.c       **** * Function Name: Init_HW
+ 186:motor.c       **** ********************************************************************************
+ 187:motor.c       **** * Summary: This function initializes system hardware peripherals 
+ 188:motor.c       **** *  
+ 189:motor.c       **** * Parameters: None  
+ 190:motor.c       **** *
+ 191:motor.c       **** * Return: None
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 11
+
+
+ 192:motor.c       **** *  
+ 193:motor.c       **** *******************************************************************************/
+ 194:motor.c       **** 
+ 195:motor.c       **** void Init_HW(void)
+ 196:motor.c       **** {
+ 380              		.loc 1 196 0
+ 381              		.cfi_startproc
+ 382              		@ args = 0, pretend = 0, frame = 0
+ 383              		@ frame_needed = 1, uses_anonymous_args = 0
+ 384 0000 80B5     		push	{r7, lr}
+ 385              		.cfi_def_cfa_offset 8
+ 386              		.cfi_offset 7, -8
+ 387              		.cfi_offset 14, -4
+ 388 0002 00AF     		add	r7, sp, #0
+ 389              		.cfi_def_cfa_register 7
+ 197:motor.c       ****     /*PWM Initialization*/
+ 198:motor.c       **** 	PWM_Drive_Start();
+ 390              		.loc 1 198 0
+ 391 0004 FFF7FEFF 		bl	PWM_Drive_Start
+ 199:motor.c       ****     /*Enable PWM, disable PWM IO output*/
+ 200:motor.c       ****     CtrlReg_PWMOut_Write(0x01);       
+ 392              		.loc 1 200 0
+ 393 0008 0120     		movs	r0, #1
+ 394 000a FFF7FEFF 		bl	CtrlReg_PWMOut_Write
+ 201:motor.c       ****    
+ 202:motor.c       **** 	/*Speed Counter Initialization*/
+ 203:motor.c       **** 	Counter_Spd_Start();
+ 395              		.loc 1 203 0
+ 396 000e FFF7FEFF 		bl	Counter_Spd_Start
+ 204:motor.c       **** 	
+ 205:motor.c       ****     /*For voltage sample*/
+ 206:motor.c       **** 	ADC_SAR_Seq_1_Start();
+ 397              		.loc 1 206 0
+ 398 0012 FFF7FEFF 		bl	ADC_SAR_Seq_1_Start
+ 207:motor.c       ****     
+ 208:motor.c       ****     /*For over current protection*/
+ 209:motor.c       **** 	IDAC_Iref_Start();
+ 399              		.loc 1 209 0
+ 400 0016 FFF7FEFF 		bl	IDAC_Iref_Start
+ 210:motor.c       ****     IDAC_Iref_SetValue(0x7d);
+ 401              		.loc 1 210 0
+ 402 001a 7D20     		movs	r0, #125
+ 403 001c FFF7FEFF 		bl	IDAC_Iref_SetValue
+ 211:motor.c       ****     
+ 212:motor.c       ****     LPComp_OC_Start();
+ 404              		.loc 1 212 0
+ 405 0020 FFF7FEFF 		bl	LPComp_OC_Start
+ 213:motor.c       **** 	
+ 214:motor.c       ****     /*UART Init*/
+ 215:motor.c       ****     UART_BCP_Start();
+ 406              		.loc 1 215 0
+ 407 0024 FFF7FEFF 		bl	UART_BCP_Start
+ 216:motor.c       **** 
+ 217:motor.c       **** 	isr_pwm_Start();
+ 408              		.loc 1 217 0
+ 409 0028 FFF7FEFF 		bl	isr_pwm_Start
+ 218:motor.c       **** 	isr_pwm_StartEx(pwm_isr);
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 12
+
+
+ 410              		.loc 1 218 0
+ 411 002c 0C4B     		ldr	r3, .L17
+ 412 002e 1800     		movs	r0, r3
+ 413 0030 FFF7FEFF 		bl	isr_pwm_StartEx
+ 219:motor.c       **** 	isr_pwm_Enable();  
+ 414              		.loc 1 219 0
+ 415 0034 FFF7FEFF 		bl	isr_pwm_Enable
+ 220:motor.c       **** 	
+ 221:motor.c       **** 	isr_spd_Start(); 
+ 416              		.loc 1 221 0
+ 417 0038 FFF7FEFF 		bl	isr_spd_Start
+ 222:motor.c       **** 	isr_spd_StartEx(speed_measure_isr);    
+ 418              		.loc 1 222 0
+ 419 003c 094B     		ldr	r3, .L17+4
+ 420 003e 1800     		movs	r0, r3
+ 421 0040 FFF7FEFF 		bl	isr_spd_StartEx
+ 223:motor.c       **** 	isr_spd_Enable(); 	
+ 422              		.loc 1 223 0
+ 423 0044 FFF7FEFF 		bl	isr_spd_Enable
+ 224:motor.c       ****     
+ 225:motor.c       **** 	isr_oc_Start(); 
+ 424              		.loc 1 225 0
+ 425 0048 FFF7FEFF 		bl	isr_oc_Start
+ 226:motor.c       **** 	isr_oc_StartEx(over_current_isr);    
+ 426              		.loc 1 226 0
+ 427 004c 064B     		ldr	r3, .L17+8
+ 428 004e 1800     		movs	r0, r3
+ 429 0050 FFF7FEFF 		bl	isr_oc_StartEx
+ 227:motor.c       **** 	isr_oc_Disable();  
+ 430              		.loc 1 227 0
+ 431 0054 FFF7FEFF 		bl	isr_oc_Disable
+ 228:motor.c       **** }
+ 432              		.loc 1 228 0
+ 433 0058 C046     		nop
+ 434 005a BD46     		mov	sp, r7
+ 435              		@ sp needed
+ 436 005c 80BD     		pop	{r7, pc}
+ 437              	.L18:
+ 438 005e C046     		.align	2
+ 439              	.L17:
+ 440 0060 00000000 		.word	pwm_isr
+ 441 0064 00000000 		.word	speed_measure_isr
+ 442 0068 00000000 		.word	over_current_isr
+ 443              		.cfi_endproc
+ 444              	.LFE36:
+ 445              		.size	Init_HW, .-Init_HW
+ 446              		.section	.text.Init_UI_HW,"ax",%progbits
+ 447              		.align	2
+ 448              		.global	Init_UI_HW
+ 449              		.code	16
+ 450              		.thumb_func
+ 451              		.type	Init_UI_HW, %function
+ 452              	Init_UI_HW:
+ 453              	.LFB37:
+ 229:motor.c       **** 
+ 230:motor.c       **** /*******************************************************************************
+ 231:motor.c       **** * Function Name: Init_UI_HW
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 13
+
+
+ 232:motor.c       **** ********************************************************************************
+ 233:motor.c       **** * Summary: This function initializes hardware peripherals for user interface
+ 234:motor.c       **** *  
+ 235:motor.c       **** * Parameters: None  
+ 236:motor.c       **** *
+ 237:motor.c       **** * Return: None
+ 238:motor.c       **** *  
+ 239:motor.c       **** *******************************************************************************/
+ 240:motor.c       **** void Init_UI_HW()
+ 241:motor.c       **** {
+ 454              		.loc 1 241 0
+ 455              		.cfi_startproc
+ 456              		@ args = 0, pretend = 0, frame = 0
+ 457              		@ frame_needed = 1, uses_anonymous_args = 0
+ 458 0000 80B5     		push	{r7, lr}
+ 459              		.cfi_def_cfa_offset 8
+ 460              		.cfi_offset 7, -8
+ 461              		.cfi_offset 14, -4
+ 462 0002 00AF     		add	r7, sp, #0
+ 463              		.cfi_def_cfa_register 7
+ 242:motor.c       **** 	UpdateStatusInit();
+ 464              		.loc 1 242 0
+ 465 0004 FFF7FEFF 		bl	UpdateStatusInit
+ 243:motor.c       **** }
+ 466              		.loc 1 243 0
+ 467 0008 C046     		nop
+ 468 000a BD46     		mov	sp, r7
+ 469              		@ sp needed
+ 470 000c 80BD     		pop	{r7, pc}
+ 471              		.cfi_endproc
+ 472              	.LFE37:
+ 473              		.size	Init_UI_HW, .-Init_UI_HW
+ 474 000e C046     		.text
+ 475              	.Letext0:
+ 476              		.file 2 "Generated_Source\\PSoC4/cytypes.h"
+ 477              		.file 3 "motor.h"
+ 478              		.section	.debug_info,"",%progbits
+ 479              	.Ldebug_info0:
+ 480 0000 E9020000 		.4byte	0x2e9
+ 481 0004 0400     		.2byte	0x4
+ 482 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 483 000a 04       		.byte	0x4
+ 484 000b 01       		.uleb128 0x1
+ 485 000c F9000000 		.4byte	.LASF49
+ 486 0010 0C       		.byte	0xc
+ 487 0011 7C000000 		.4byte	.LASF50
+ 488 0015 39020000 		.4byte	.LASF51
+ 489 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 490 001d 00000000 		.4byte	0
+ 491 0021 00000000 		.4byte	.Ldebug_line0
+ 492 0025 02       		.uleb128 0x2
+ 493 0026 01       		.byte	0x1
+ 494 0027 06       		.byte	0x6
+ 495 0028 2E030000 		.4byte	.LASF0
+ 496 002c 02       		.uleb128 0x2
+ 497 002d 01       		.byte	0x1
+ 498 002e 08       		.byte	0x8
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 14
+
+
+ 499 002f C8010000 		.4byte	.LASF1
+ 500 0033 02       		.uleb128 0x2
+ 501 0034 02       		.byte	0x2
+ 502 0035 05       		.byte	0x5
+ 503 0036 B0010000 		.4byte	.LASF2
+ 504 003a 02       		.uleb128 0x2
+ 505 003b 02       		.byte	0x2
+ 506 003c 07       		.byte	0x7
+ 507 003d D4000000 		.4byte	.LASF3
+ 508 0041 02       		.uleb128 0x2
+ 509 0042 04       		.byte	0x4
+ 510 0043 05       		.byte	0x5
+ 511 0044 12030000 		.4byte	.LASF4
+ 512 0048 02       		.uleb128 0x2
+ 513 0049 04       		.byte	0x4
+ 514 004a 07       		.byte	0x7
+ 515 004b BA000000 		.4byte	.LASF5
+ 516 004f 02       		.uleb128 0x2
+ 517 0050 08       		.byte	0x8
+ 518 0051 05       		.byte	0x5
+ 519 0052 00000000 		.4byte	.LASF6
+ 520 0056 02       		.uleb128 0x2
+ 521 0057 08       		.byte	0x8
+ 522 0058 07       		.byte	0x7
+ 523 0059 E3010000 		.4byte	.LASF7
+ 524 005d 03       		.uleb128 0x3
+ 525 005e 04       		.byte	0x4
+ 526 005f 05       		.byte	0x5
+ 527 0060 696E7400 		.ascii	"int\000"
+ 528 0064 02       		.uleb128 0x2
+ 529 0065 04       		.byte	0x4
+ 530 0066 07       		.byte	0x7
+ 531 0067 D6010000 		.4byte	.LASF8
+ 532 006b 04       		.uleb128 0x4
+ 533 006c 00030000 		.4byte	.LASF9
+ 534 0070 02       		.byte	0x2
+ 535 0071 E401     		.2byte	0x1e4
+ 536 0073 2C000000 		.4byte	0x2c
+ 537 0077 04       		.uleb128 0x4
+ 538 0078 BA010000 		.4byte	.LASF10
+ 539 007c 02       		.byte	0x2
+ 540 007d E501     		.2byte	0x1e5
+ 541 007f 3A000000 		.4byte	0x3a
+ 542 0083 04       		.uleb128 0x4
+ 543 0084 C1010000 		.4byte	.LASF11
+ 544 0088 02       		.byte	0x2
+ 545 0089 E601     		.2byte	0x1e6
+ 546 008b 48000000 		.4byte	0x48
+ 547 008f 02       		.uleb128 0x2
+ 548 0090 04       		.byte	0x4
+ 549 0091 04       		.byte	0x4
+ 550 0092 84000000 		.4byte	.LASF12
+ 551 0096 02       		.uleb128 0x2
+ 552 0097 08       		.byte	0x8
+ 553 0098 04       		.byte	0x4
+ 554 0099 A2010000 		.4byte	.LASF13
+ 555 009d 02       		.uleb128 0x2
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 15
+
+
+ 556 009e 01       		.byte	0x1
+ 557 009f 08       		.byte	0x8
+ 558 00a0 D7020000 		.4byte	.LASF14
+ 559 00a4 02       		.uleb128 0x2
+ 560 00a5 08       		.byte	0x8
+ 561 00a6 04       		.byte	0x4
+ 562 00a7 22030000 		.4byte	.LASF15
+ 563 00ab 02       		.uleb128 0x2
+ 564 00ac 04       		.byte	0x4
+ 565 00ad 07       		.byte	0x7
+ 566 00ae 30020000 		.4byte	.LASF16
+ 567 00b2 05       		.uleb128 0x5
+ 568 00b3 01       		.byte	0x1
+ 569 00b4 03       		.byte	0x3
+ 570 00b5 46       		.byte	0x46
+ 571 00b6 C7000000 		.4byte	0xc7
+ 572 00ba 06       		.uleb128 0x6
+ 573 00bb 72756E00 		.ascii	"run\000"
+ 574 00bf 03       		.byte	0x3
+ 575 00c0 48       		.byte	0x48
+ 576 00c1 6B000000 		.4byte	0x6b
+ 577 00c5 00       		.byte	0
+ 578 00c6 00       		.byte	0
+ 579 00c7 07       		.uleb128 0x7
+ 580 00c8 13020000 		.4byte	.LASF17
+ 581 00cc 03       		.byte	0x3
+ 582 00cd 49       		.byte	0x49
+ 583 00ce B2000000 		.4byte	0xb2
+ 584 00d2 05       		.uleb128 0x5
+ 585 00d3 12       		.byte	0x12
+ 586 00d4 03       		.byte	0x3
+ 587 00d5 4C       		.byte	0x4c
+ 588 00d6 51010000 		.4byte	0x151
+ 589 00da 06       		.uleb128 0x6
+ 590 00db 44697200 		.ascii	"Dir\000"
+ 591 00df 03       		.byte	0x3
+ 592 00e0 4E       		.byte	0x4e
+ 593 00e1 6B000000 		.4byte	0x6b
+ 594 00e5 00       		.byte	0
+ 595 00e6 08       		.uleb128 0x8
+ 596 00e7 B0000000 		.4byte	.LASF18
+ 597 00eb 03       		.byte	0x3
+ 598 00ec 50       		.byte	0x50
+ 599 00ed 77000000 		.4byte	0x77
+ 600 00f1 02       		.byte	0x2
+ 601 00f2 08       		.uleb128 0x8
+ 602 00f3 F7020000 		.4byte	.LASF19
+ 603 00f7 03       		.byte	0x3
+ 604 00f8 51       		.byte	0x51
+ 605 00f9 77000000 		.4byte	0x77
+ 606 00fd 04       		.byte	0x4
+ 607 00fe 08       		.uleb128 0x8
+ 608 00ff 40000000 		.4byte	.LASF20
+ 609 0103 03       		.byte	0x3
+ 610 0104 52       		.byte	0x52
+ 611 0105 77000000 		.4byte	0x77
+ 612 0109 06       		.byte	0x6
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 16
+
+
+ 613 010a 06       		.uleb128 0x6
+ 614 010b 6B7000   		.ascii	"kp\000"
+ 615 010e 03       		.byte	0x3
+ 616 010f 54       		.byte	0x54
+ 617 0110 77000000 		.4byte	0x77
+ 618 0114 08       		.byte	0x8
+ 619 0115 06       		.uleb128 0x6
+ 620 0116 6B6900   		.ascii	"ki\000"
+ 621 0119 03       		.byte	0x3
+ 622 011a 55       		.byte	0x55
+ 623 011b 77000000 		.4byte	0x77
+ 624 011f 0A       		.byte	0xa
+ 625 0120 08       		.uleb128 0x8
+ 626 0121 1E000000 		.4byte	.LASF21
+ 627 0125 03       		.byte	0x3
+ 628 0126 57       		.byte	0x57
+ 629 0127 77000000 		.4byte	0x77
+ 630 012b 0C       		.byte	0xc
+ 631 012c 08       		.uleb128 0x8
+ 632 012d 34000000 		.4byte	.LASF22
+ 633 0131 03       		.byte	0x3
+ 634 0132 58       		.byte	0x58
+ 635 0133 77000000 		.4byte	0x77
+ 636 0137 0E       		.byte	0xe
+ 637 0138 08       		.uleb128 0x8
+ 638 0139 5E000000 		.4byte	.LASF23
+ 639 013d 03       		.byte	0x3
+ 640 013e 59       		.byte	0x59
+ 641 013f 6B000000 		.4byte	0x6b
+ 642 0143 10       		.byte	0x10
+ 643 0144 08       		.uleb128 0x8
+ 644 0145 DC020000 		.4byte	.LASF24
+ 645 0149 03       		.byte	0x3
+ 646 014a 5A       		.byte	0x5a
+ 647 014b 6B000000 		.4byte	0x6b
+ 648 014f 11       		.byte	0x11
+ 649 0150 00       		.byte	0
+ 650 0151 07       		.uleb128 0x7
+ 651 0152 EF020000 		.4byte	.LASF25
+ 652 0156 03       		.byte	0x3
+ 653 0157 5B       		.byte	0x5b
+ 654 0158 D2000000 		.4byte	0xd2
+ 655 015c 09       		.uleb128 0x9
+ 656 015d 4C000000 		.4byte	.LASF52
+ 657 0161 01       		.byte	0x1
+ 658 0162 2C000000 		.4byte	0x2c
+ 659 0166 03       		.byte	0x3
+ 660 0167 5F       		.byte	0x5f
+ 661 0168 8B010000 		.4byte	0x18b
+ 662 016c 0A       		.uleb128 0xa
+ 663 016d 87010000 		.4byte	.LASF26
+ 664 0171 00       		.byte	0
+ 665 0172 0A       		.uleb128 0xa
+ 666 0173 0B020000 		.4byte	.LASF27
+ 667 0177 01       		.byte	0x1
+ 668 0178 0A       		.uleb128 0xa
+ 669 0179 A6000000 		.4byte	.LASF28
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 17
+
+
+ 670 017d 02       		.byte	0x2
+ 671 017e 0A       		.uleb128 0xa
+ 672 017f CC000000 		.4byte	.LASF29
+ 673 0183 03       		.byte	0x3
+ 674 0184 0A       		.uleb128 0xa
+ 675 0185 1A020000 		.4byte	.LASF30
+ 676 0189 04       		.byte	0x4
+ 677 018a 00       		.byte	0
+ 678 018b 07       		.uleb128 0x7
+ 679 018c 0E000000 		.4byte	.LASF31
+ 680 0190 03       		.byte	0x3
+ 681 0191 65       		.byte	0x65
+ 682 0192 5C010000 		.4byte	0x15c
+ 683 0196 0B       		.uleb128 0xb
+ 684 0197 F1000000 		.4byte	.LASF32
+ 685 019b 01       		.byte	0x1
+ 686 019c 4D       		.byte	0x4d
+ 687 019d 00000000 		.4byte	.LFB32
+ 688 01a1 78000000 		.4byte	.LFE32-.LFB32
+ 689 01a5 01       		.uleb128 0x1
+ 690 01a6 9C       		.byte	0x9c
+ 691 01a7 0C       		.uleb128 0xc
+ 692 01a8 90010000 		.4byte	.LASF53
+ 693 01ac 01       		.byte	0x1
+ 694 01ad 76       		.byte	0x76
+ 695 01ae 00000000 		.4byte	.LFB33
+ 696 01b2 74000000 		.4byte	.LFE33-.LFB33
+ 697 01b6 01       		.uleb128 0x1
+ 698 01b7 9C       		.byte	0x9c
+ 699 01b8 CB010000 		.4byte	0x1cb
+ 700 01bc 0D       		.uleb128 0xd
+ 701 01bd E7000000 		.4byte	.LASF54
+ 702 01c1 01       		.byte	0x1
+ 703 01c2 78       		.byte	0x78
+ 704 01c3 77000000 		.4byte	0x77
+ 705 01c7 02       		.uleb128 0x2
+ 706 01c8 91       		.byte	0x91
+ 707 01c9 76       		.sleb128 -10
+ 708 01ca 00       		.byte	0
+ 709 01cb 0B       		.uleb128 0xb
+ 710 01cc FA010000 		.4byte	.LASF33
+ 711 01d0 01       		.byte	0x1
+ 712 01d1 97       		.byte	0x97
+ 713 01d2 00000000 		.4byte	.LFB34
+ 714 01d6 20000000 		.4byte	.LFE34-.LFB34
+ 715 01da 01       		.uleb128 0x1
+ 716 01db 9C       		.byte	0x9c
+ 717 01dc 0E       		.uleb128 0xe
+ 718 01dd 53000000 		.4byte	.LASF34
+ 719 01e1 01       		.byte	0x1
+ 720 01e2 A9       		.byte	0xa9
+ 721 01e3 00000000 		.4byte	.LFB35
+ 722 01e7 44000000 		.4byte	.LFE35-.LFB35
+ 723 01eb 01       		.uleb128 0x1
+ 724 01ec 9C       		.byte	0x9c
+ 725 01ed 0B       		.uleb128 0xb
+ 726 01ee 8A000000 		.4byte	.LASF35
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 18
+
+
+ 727 01f2 01       		.byte	0x1
+ 728 01f3 C3       		.byte	0xc3
+ 729 01f4 00000000 		.4byte	.LFB36
+ 730 01f8 6C000000 		.4byte	.LFE36-.LFB36
+ 731 01fc 01       		.uleb128 0x1
+ 732 01fd 9C       		.byte	0x9c
+ 733 01fe 0B       		.uleb128 0xb
+ 734 01ff 68000000 		.4byte	.LASF36
+ 735 0203 01       		.byte	0x1
+ 736 0204 F0       		.byte	0xf0
+ 737 0205 00000000 		.4byte	.LFB37
+ 738 0209 0E000000 		.4byte	.LFE37-.LFB37
+ 739 020d 01       		.uleb128 0x1
+ 740 020e 9C       		.byte	0x9c
+ 741 020f 0F       		.uleb128 0xf
+ 742 0210 9B000000 		.4byte	.LASF37
+ 743 0214 01       		.byte	0x1
+ 744 0215 3D       		.byte	0x3d
+ 745 0216 8B010000 		.4byte	0x18b
+ 746 021a 05       		.uleb128 0x5
+ 747 021b 03       		.byte	0x3
+ 748 021c 00000000 		.4byte	errorState
+ 749 0220 0F       		.uleb128 0xf
+ 750 0221 A9010000 		.4byte	.LASF38
+ 751 0225 01       		.byte	0x1
+ 752 0226 2F       		.byte	0x2f
+ 753 0227 C7000000 		.4byte	0xc7
+ 754 022b 05       		.uleb128 0x5
+ 755 022c 03       		.byte	0x3
+ 756 022d 00000000 		.4byte	UI_Cmd
+ 757 0231 0F       		.uleb128 0xf
+ 758 0232 16000000 		.4byte	.LASF39
+ 759 0236 01       		.byte	0x1
+ 760 0237 30       		.byte	0x30
+ 761 0238 51010000 		.4byte	0x151
+ 762 023c 05       		.uleb128 0x5
+ 763 023d 03       		.byte	0x3
+ 764 023e 00000000 		.4byte	UI_Data
+ 765 0242 0F       		.uleb128 0xf
+ 766 0243 B0000000 		.4byte	.LASF18
+ 767 0247 01       		.byte	0x1
+ 768 0248 32       		.byte	0x32
+ 769 0249 77000000 		.4byte	0x77
+ 770 024d 05       		.uleb128 0x5
+ 771 024e 03       		.byte	0x3
+ 772 024f 00000000 		.4byte	gearRatio
+ 773 0253 0F       		.uleb128 0xf
+ 774 0254 43030000 		.4byte	.LASF40
+ 775 0258 01       		.byte	0x1
+ 776 0259 33       		.byte	0x33
+ 777 025a 77000000 		.4byte	0x77
+ 778 025e 05       		.uleb128 0x5
+ 779 025f 03       		.byte	0x3
+ 780 0260 00000000 		.4byte	speedRef
+ 781 0264 0F       		.uleb128 0xf
+ 782 0265 92000000 		.4byte	.LASF41
+ 783 0269 01       		.byte	0x1
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 19
+
+
+ 784 026a 34       		.byte	0x34
+ 785 026b 77000000 		.4byte	0x77
+ 786 026f 05       		.uleb128 0x5
+ 787 0270 03       		.byte	0x3
+ 788 0271 00000000 		.4byte	speedCur
+ 789 0275 0F       		.uleb128 0xf
+ 790 0276 06030000 		.4byte	.LASF42
+ 791 027a 01       		.byte	0x1
+ 792 027b 36       		.byte	0x36
+ 793 027c 77000000 		.4byte	0x77
+ 794 0280 05       		.uleb128 0x5
+ 795 0281 03       		.byte	0x3
+ 796 0282 00000000 		.4byte	preSpeedCur
+ 797 0286 0F       		.uleb128 0xf
+ 798 0287 23020000 		.4byte	.LASF43
+ 799 028b 01       		.byte	0x1
+ 800 028c 37       		.byte	0x37
+ 801 028d 77000000 		.4byte	0x77
+ 802 0291 05       		.uleb128 0x5
+ 803 0292 03       		.byte	0x3
+ 804 0293 00000000 		.4byte	preCntCaptur
+ 805 0297 0F       		.uleb128 0xf
+ 806 0298 1B030000 		.4byte	.LASF44
+ 807 029c 01       		.byte	0x1
+ 808 029d 3A       		.byte	0x3a
+ 809 029e 77000000 		.4byte	0x77
+ 810 02a2 05       		.uleb128 0x5
+ 811 02a3 03       		.byte	0x3
+ 812 02a4 00000000 		.4byte	pwmCnt
+ 813 02a8 0F       		.uleb128 0xf
+ 814 02a9 2A000000 		.4byte	.LASF45
+ 815 02ad 01       		.byte	0x1
+ 816 02ae 39       		.byte	0x39
+ 817 02af 6B000000 		.4byte	0x6b
+ 818 02b3 05       		.uleb128 0x5
+ 819 02b4 03       		.byte	0x3
+ 820 02b5 00000000 		.4byte	dutyCycle
+ 821 02b9 0F       		.uleb128 0xf
+ 822 02ba 3A030000 		.4byte	.LASF46
+ 823 02be 01       		.byte	0x1
+ 824 02bf 3E       		.byte	0x3e
+ 825 02c0 6B000000 		.4byte	0x6b
+ 826 02c4 05       		.uleb128 0x5
+ 827 02c5 03       		.byte	0x3
+ 828 02c6 00000000 		.4byte	stateSys
+ 829 02ca 0F       		.uleb128 0xf
+ 830 02cb 73000000 		.4byte	.LASF47
+ 831 02cf 01       		.byte	0x1
+ 832 02d0 3B       		.byte	0x3b
+ 833 02d1 6B000000 		.4byte	0x6b
+ 834 02d5 05       		.uleb128 0x5
+ 835 02d6 03       		.byte	0x3
+ 836 02d7 00000000 		.4byte	firstRun
+ 837 02db 0F       		.uleb128 0xf
+ 838 02dc E4020000 		.4byte	.LASF48
+ 839 02e0 01       		.byte	0x1
+ 840 02e1 3C       		.byte	0x3c
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 20
+
+
+ 841 02e2 6B000000 		.4byte	0x6b
+ 842 02e6 05       		.uleb128 0x5
+ 843 02e7 03       		.byte	0x3
+ 844 02e8 00000000 		.4byte	ocBlankCnt
+ 845 02ec 00       		.byte	0
+ 846              		.section	.debug_abbrev,"",%progbits
+ 847              	.Ldebug_abbrev0:
+ 848 0000 01       		.uleb128 0x1
+ 849 0001 11       		.uleb128 0x11
+ 850 0002 01       		.byte	0x1
+ 851 0003 25       		.uleb128 0x25
+ 852 0004 0E       		.uleb128 0xe
+ 853 0005 13       		.uleb128 0x13
+ 854 0006 0B       		.uleb128 0xb
+ 855 0007 03       		.uleb128 0x3
+ 856 0008 0E       		.uleb128 0xe
+ 857 0009 1B       		.uleb128 0x1b
+ 858 000a 0E       		.uleb128 0xe
+ 859 000b 55       		.uleb128 0x55
+ 860 000c 17       		.uleb128 0x17
+ 861 000d 11       		.uleb128 0x11
+ 862 000e 01       		.uleb128 0x1
+ 863 000f 10       		.uleb128 0x10
+ 864 0010 17       		.uleb128 0x17
+ 865 0011 00       		.byte	0
+ 866 0012 00       		.byte	0
+ 867 0013 02       		.uleb128 0x2
+ 868 0014 24       		.uleb128 0x24
+ 869 0015 00       		.byte	0
+ 870 0016 0B       		.uleb128 0xb
+ 871 0017 0B       		.uleb128 0xb
+ 872 0018 3E       		.uleb128 0x3e
+ 873 0019 0B       		.uleb128 0xb
+ 874 001a 03       		.uleb128 0x3
+ 875 001b 0E       		.uleb128 0xe
+ 876 001c 00       		.byte	0
+ 877 001d 00       		.byte	0
+ 878 001e 03       		.uleb128 0x3
+ 879 001f 24       		.uleb128 0x24
+ 880 0020 00       		.byte	0
+ 881 0021 0B       		.uleb128 0xb
+ 882 0022 0B       		.uleb128 0xb
+ 883 0023 3E       		.uleb128 0x3e
+ 884 0024 0B       		.uleb128 0xb
+ 885 0025 03       		.uleb128 0x3
+ 886 0026 08       		.uleb128 0x8
+ 887 0027 00       		.byte	0
+ 888 0028 00       		.byte	0
+ 889 0029 04       		.uleb128 0x4
+ 890 002a 16       		.uleb128 0x16
+ 891 002b 00       		.byte	0
+ 892 002c 03       		.uleb128 0x3
+ 893 002d 0E       		.uleb128 0xe
+ 894 002e 3A       		.uleb128 0x3a
+ 895 002f 0B       		.uleb128 0xb
+ 896 0030 3B       		.uleb128 0x3b
+ 897 0031 05       		.uleb128 0x5
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 21
+
+
+ 898 0032 49       		.uleb128 0x49
+ 899 0033 13       		.uleb128 0x13
+ 900 0034 00       		.byte	0
+ 901 0035 00       		.byte	0
+ 902 0036 05       		.uleb128 0x5
+ 903 0037 13       		.uleb128 0x13
+ 904 0038 01       		.byte	0x1
+ 905 0039 0B       		.uleb128 0xb
+ 906 003a 0B       		.uleb128 0xb
+ 907 003b 3A       		.uleb128 0x3a
+ 908 003c 0B       		.uleb128 0xb
+ 909 003d 3B       		.uleb128 0x3b
+ 910 003e 0B       		.uleb128 0xb
+ 911 003f 01       		.uleb128 0x1
+ 912 0040 13       		.uleb128 0x13
+ 913 0041 00       		.byte	0
+ 914 0042 00       		.byte	0
+ 915 0043 06       		.uleb128 0x6
+ 916 0044 0D       		.uleb128 0xd
+ 917 0045 00       		.byte	0
+ 918 0046 03       		.uleb128 0x3
+ 919 0047 08       		.uleb128 0x8
+ 920 0048 3A       		.uleb128 0x3a
+ 921 0049 0B       		.uleb128 0xb
+ 922 004a 3B       		.uleb128 0x3b
+ 923 004b 0B       		.uleb128 0xb
+ 924 004c 49       		.uleb128 0x49
+ 925 004d 13       		.uleb128 0x13
+ 926 004e 38       		.uleb128 0x38
+ 927 004f 0B       		.uleb128 0xb
+ 928 0050 00       		.byte	0
+ 929 0051 00       		.byte	0
+ 930 0052 07       		.uleb128 0x7
+ 931 0053 16       		.uleb128 0x16
+ 932 0054 00       		.byte	0
+ 933 0055 03       		.uleb128 0x3
+ 934 0056 0E       		.uleb128 0xe
+ 935 0057 3A       		.uleb128 0x3a
+ 936 0058 0B       		.uleb128 0xb
+ 937 0059 3B       		.uleb128 0x3b
+ 938 005a 0B       		.uleb128 0xb
+ 939 005b 49       		.uleb128 0x49
+ 940 005c 13       		.uleb128 0x13
+ 941 005d 00       		.byte	0
+ 942 005e 00       		.byte	0
+ 943 005f 08       		.uleb128 0x8
+ 944 0060 0D       		.uleb128 0xd
+ 945 0061 00       		.byte	0
+ 946 0062 03       		.uleb128 0x3
+ 947 0063 0E       		.uleb128 0xe
+ 948 0064 3A       		.uleb128 0x3a
+ 949 0065 0B       		.uleb128 0xb
+ 950 0066 3B       		.uleb128 0x3b
+ 951 0067 0B       		.uleb128 0xb
+ 952 0068 49       		.uleb128 0x49
+ 953 0069 13       		.uleb128 0x13
+ 954 006a 38       		.uleb128 0x38
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 22
+
+
+ 955 006b 0B       		.uleb128 0xb
+ 956 006c 00       		.byte	0
+ 957 006d 00       		.byte	0
+ 958 006e 09       		.uleb128 0x9
+ 959 006f 04       		.uleb128 0x4
+ 960 0070 01       		.byte	0x1
+ 961 0071 03       		.uleb128 0x3
+ 962 0072 0E       		.uleb128 0xe
+ 963 0073 0B       		.uleb128 0xb
+ 964 0074 0B       		.uleb128 0xb
+ 965 0075 49       		.uleb128 0x49
+ 966 0076 13       		.uleb128 0x13
+ 967 0077 3A       		.uleb128 0x3a
+ 968 0078 0B       		.uleb128 0xb
+ 969 0079 3B       		.uleb128 0x3b
+ 970 007a 0B       		.uleb128 0xb
+ 971 007b 01       		.uleb128 0x1
+ 972 007c 13       		.uleb128 0x13
+ 973 007d 00       		.byte	0
+ 974 007e 00       		.byte	0
+ 975 007f 0A       		.uleb128 0xa
+ 976 0080 28       		.uleb128 0x28
+ 977 0081 00       		.byte	0
+ 978 0082 03       		.uleb128 0x3
+ 979 0083 0E       		.uleb128 0xe
+ 980 0084 1C       		.uleb128 0x1c
+ 981 0085 0B       		.uleb128 0xb
+ 982 0086 00       		.byte	0
+ 983 0087 00       		.byte	0
+ 984 0088 0B       		.uleb128 0xb
+ 985 0089 2E       		.uleb128 0x2e
+ 986 008a 00       		.byte	0
+ 987 008b 3F       		.uleb128 0x3f
+ 988 008c 19       		.uleb128 0x19
+ 989 008d 03       		.uleb128 0x3
+ 990 008e 0E       		.uleb128 0xe
+ 991 008f 3A       		.uleb128 0x3a
+ 992 0090 0B       		.uleb128 0xb
+ 993 0091 3B       		.uleb128 0x3b
+ 994 0092 0B       		.uleb128 0xb
+ 995 0093 27       		.uleb128 0x27
+ 996 0094 19       		.uleb128 0x19
+ 997 0095 11       		.uleb128 0x11
+ 998 0096 01       		.uleb128 0x1
+ 999 0097 12       		.uleb128 0x12
+ 1000 0098 06       		.uleb128 0x6
+ 1001 0099 40       		.uleb128 0x40
+ 1002 009a 18       		.uleb128 0x18
+ 1003 009b 9642     		.uleb128 0x2116
+ 1004 009d 19       		.uleb128 0x19
+ 1005 009e 00       		.byte	0
+ 1006 009f 00       		.byte	0
+ 1007 00a0 0C       		.uleb128 0xc
+ 1008 00a1 2E       		.uleb128 0x2e
+ 1009 00a2 01       		.byte	0x1
+ 1010 00a3 3F       		.uleb128 0x3f
+ 1011 00a4 19       		.uleb128 0x19
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 23
+
+
+ 1012 00a5 03       		.uleb128 0x3
+ 1013 00a6 0E       		.uleb128 0xe
+ 1014 00a7 3A       		.uleb128 0x3a
+ 1015 00a8 0B       		.uleb128 0xb
+ 1016 00a9 3B       		.uleb128 0x3b
+ 1017 00aa 0B       		.uleb128 0xb
+ 1018 00ab 27       		.uleb128 0x27
+ 1019 00ac 19       		.uleb128 0x19
+ 1020 00ad 11       		.uleb128 0x11
+ 1021 00ae 01       		.uleb128 0x1
+ 1022 00af 12       		.uleb128 0x12
+ 1023 00b0 06       		.uleb128 0x6
+ 1024 00b1 40       		.uleb128 0x40
+ 1025 00b2 18       		.uleb128 0x18
+ 1026 00b3 9642     		.uleb128 0x2116
+ 1027 00b5 19       		.uleb128 0x19
+ 1028 00b6 01       		.uleb128 0x1
+ 1029 00b7 13       		.uleb128 0x13
+ 1030 00b8 00       		.byte	0
+ 1031 00b9 00       		.byte	0
+ 1032 00ba 0D       		.uleb128 0xd
+ 1033 00bb 34       		.uleb128 0x34
+ 1034 00bc 00       		.byte	0
+ 1035 00bd 03       		.uleb128 0x3
+ 1036 00be 0E       		.uleb128 0xe
+ 1037 00bf 3A       		.uleb128 0x3a
+ 1038 00c0 0B       		.uleb128 0xb
+ 1039 00c1 3B       		.uleb128 0x3b
+ 1040 00c2 0B       		.uleb128 0xb
+ 1041 00c3 49       		.uleb128 0x49
+ 1042 00c4 13       		.uleb128 0x13
+ 1043 00c5 02       		.uleb128 0x2
+ 1044 00c6 18       		.uleb128 0x18
+ 1045 00c7 00       		.byte	0
+ 1046 00c8 00       		.byte	0
+ 1047 00c9 0E       		.uleb128 0xe
+ 1048 00ca 2E       		.uleb128 0x2e
+ 1049 00cb 00       		.byte	0
+ 1050 00cc 3F       		.uleb128 0x3f
+ 1051 00cd 19       		.uleb128 0x19
+ 1052 00ce 03       		.uleb128 0x3
+ 1053 00cf 0E       		.uleb128 0xe
+ 1054 00d0 3A       		.uleb128 0x3a
+ 1055 00d1 0B       		.uleb128 0xb
+ 1056 00d2 3B       		.uleb128 0x3b
+ 1057 00d3 0B       		.uleb128 0xb
+ 1058 00d4 27       		.uleb128 0x27
+ 1059 00d5 19       		.uleb128 0x19
+ 1060 00d6 11       		.uleb128 0x11
+ 1061 00d7 01       		.uleb128 0x1
+ 1062 00d8 12       		.uleb128 0x12
+ 1063 00d9 06       		.uleb128 0x6
+ 1064 00da 40       		.uleb128 0x40
+ 1065 00db 18       		.uleb128 0x18
+ 1066 00dc 9742     		.uleb128 0x2117
+ 1067 00de 19       		.uleb128 0x19
+ 1068 00df 00       		.byte	0
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 24
+
+
+ 1069 00e0 00       		.byte	0
+ 1070 00e1 0F       		.uleb128 0xf
+ 1071 00e2 34       		.uleb128 0x34
+ 1072 00e3 00       		.byte	0
+ 1073 00e4 03       		.uleb128 0x3
+ 1074 00e5 0E       		.uleb128 0xe
+ 1075 00e6 3A       		.uleb128 0x3a
+ 1076 00e7 0B       		.uleb128 0xb
+ 1077 00e8 3B       		.uleb128 0x3b
+ 1078 00e9 0B       		.uleb128 0xb
+ 1079 00ea 49       		.uleb128 0x49
+ 1080 00eb 13       		.uleb128 0x13
+ 1081 00ec 3F       		.uleb128 0x3f
+ 1082 00ed 19       		.uleb128 0x19
+ 1083 00ee 02       		.uleb128 0x2
+ 1084 00ef 18       		.uleb128 0x18
+ 1085 00f0 00       		.byte	0
+ 1086 00f1 00       		.byte	0
+ 1087 00f2 00       		.byte	0
+ 1088              		.section	.debug_aranges,"",%progbits
+ 1089 0000 44000000 		.4byte	0x44
+ 1090 0004 0200     		.2byte	0x2
+ 1091 0006 00000000 		.4byte	.Ldebug_info0
+ 1092 000a 04       		.byte	0x4
+ 1093 000b 00       		.byte	0
+ 1094 000c 0000     		.2byte	0
+ 1095 000e 0000     		.2byte	0
+ 1096 0010 00000000 		.4byte	.LFB32
+ 1097 0014 78000000 		.4byte	.LFE32-.LFB32
+ 1098 0018 00000000 		.4byte	.LFB33
+ 1099 001c 74000000 		.4byte	.LFE33-.LFB33
+ 1100 0020 00000000 		.4byte	.LFB34
+ 1101 0024 20000000 		.4byte	.LFE34-.LFB34
+ 1102 0028 00000000 		.4byte	.LFB35
+ 1103 002c 44000000 		.4byte	.LFE35-.LFB35
+ 1104 0030 00000000 		.4byte	.LFB36
+ 1105 0034 6C000000 		.4byte	.LFE36-.LFB36
+ 1106 0038 00000000 		.4byte	.LFB37
+ 1107 003c 0E000000 		.4byte	.LFE37-.LFB37
+ 1108 0040 00000000 		.4byte	0
+ 1109 0044 00000000 		.4byte	0
+ 1110              		.section	.debug_ranges,"",%progbits
+ 1111              	.Ldebug_ranges0:
+ 1112 0000 00000000 		.4byte	.LFB32
+ 1113 0004 78000000 		.4byte	.LFE32
+ 1114 0008 00000000 		.4byte	.LFB33
+ 1115 000c 74000000 		.4byte	.LFE33
+ 1116 0010 00000000 		.4byte	.LFB34
+ 1117 0014 20000000 		.4byte	.LFE34
+ 1118 0018 00000000 		.4byte	.LFB35
+ 1119 001c 44000000 		.4byte	.LFE35
+ 1120 0020 00000000 		.4byte	.LFB36
+ 1121 0024 6C000000 		.4byte	.LFE36
+ 1122 0028 00000000 		.4byte	.LFB37
+ 1123 002c 0E000000 		.4byte	.LFE37
+ 1124 0030 00000000 		.4byte	0
+ 1125 0034 00000000 		.4byte	0
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 25
+
+
+ 1126              		.section	.debug_line,"",%progbits
+ 1127              	.Ldebug_line0:
+ 1128 0000 EA000000 		.section	.debug_str,"MS",%progbits,1
+ 1128      02004D00 
+ 1128      00000201 
+ 1128      FB0E0D00 
+ 1128      01010101 
+ 1129              	.LASF6:
+ 1130 0000 6C6F6E67 		.ascii	"long long int\000"
+ 1130      206C6F6E 
+ 1130      6720696E 
+ 1130      7400
+ 1131              	.LASF31:
+ 1132 000e 4572726F 		.ascii	"Error_T\000"
+ 1132      725F5400 
+ 1133              	.LASF39:
+ 1134 0016 55495F44 		.ascii	"UI_Data\000"
+ 1134      61746100 
+ 1135              	.LASF21:
+ 1136 001e 6D617853 		.ascii	"maxSpeedRpm\000"
+ 1136      70656564 
+ 1136      52706D00 
+ 1137              	.LASF45:
+ 1138 002a 64757479 		.ascii	"dutyCycle\000"
+ 1138      4379636C 
+ 1138      6500
+ 1139              	.LASF22:
+ 1140 0034 6D696E53 		.ascii	"minSpeedRpm\000"
+ 1140      70656564 
+ 1140      52706D00 
+ 1141              	.LASF20:
+ 1142 0040 73706565 		.ascii	"speedRpmRef\000"
+ 1142      6452706D 
+ 1142      52656600 
+ 1143              	.LASF52:
+ 1144 004c 5F457272 		.ascii	"_Error\000"
+ 1144      6F7200
+ 1145              	.LASF34:
+ 1146 0053 496E6974 		.ascii	"Init_UI_FW\000"
+ 1146      5F55495F 
+ 1146      465700
+ 1147              	.LASF23:
+ 1148 005e 706F6C65 		.ascii	"polePairs\000"
+ 1148      50616972 
+ 1148      7300
+ 1149              	.LASF36:
+ 1150 0068 496E6974 		.ascii	"Init_UI_HW\000"
+ 1150      5F55495F 
+ 1150      485700
+ 1151              	.LASF47:
+ 1152 0073 66697273 		.ascii	"firstRun\000"
+ 1152      7452756E 
+ 1152      00
+ 1153              	.LASF50:
+ 1154 007c 6D6F746F 		.ascii	"motor.c\000"
+ 1154      722E6300 
+ 1155              	.LASF12:
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 26
+
+
+ 1156 0084 666C6F61 		.ascii	"float\000"
+ 1156      7400
+ 1157              	.LASF35:
+ 1158 008a 496E6974 		.ascii	"Init_HW\000"
+ 1158      5F485700 
+ 1159              	.LASF41:
+ 1160 0092 73706565 		.ascii	"speedCur\000"
+ 1160      64437572 
+ 1160      00
+ 1161              	.LASF37:
+ 1162 009b 6572726F 		.ascii	"errorState\000"
+ 1162      72537461 
+ 1162      746500
+ 1163              	.LASF28:
+ 1164 00a6 68616C6C 		.ascii	"hallError\000"
+ 1164      4572726F 
+ 1164      7200
+ 1165              	.LASF18:
+ 1166 00b0 67656172 		.ascii	"gearRatio\000"
+ 1166      52617469 
+ 1166      6F00
+ 1167              	.LASF5:
+ 1168 00ba 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1168      20756E73 
+ 1168      69676E65 
+ 1168      6420696E 
+ 1168      7400
+ 1169              	.LASF29:
+ 1170 00cc 6C6F7756 		.ascii	"lowVolt\000"
+ 1170      6F6C7400 
+ 1171              	.LASF3:
+ 1172 00d4 73686F72 		.ascii	"short unsigned int\000"
+ 1172      7420756E 
+ 1172      7369676E 
+ 1172      65642069 
+ 1172      6E7400
+ 1173              	.LASF54:
+ 1174 00e7 636E7443 		.ascii	"cntCaptur\000"
+ 1174      61707475 
+ 1174      7200
+ 1175              	.LASF32:
+ 1176 00f1 70776D5F 		.ascii	"pwm_isr\000"
+ 1176      69737200 
+ 1177              	.LASF49:
+ 1178 00f9 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1178      43313120 
+ 1178      352E342E 
+ 1178      31203230 
+ 1178      31363036 
+ 1179 012c 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m0 -mthumb -g -O"
+ 1179      20726576 
+ 1179      6973696F 
+ 1179      6E203233 
+ 1179      37373135 
+ 1180 015f 30202D66 		.ascii	"0 -ffunction-sections -ffat-lto-objects\000"
+ 1180      66756E63 
+ 1180      74696F6E 
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 27
+
+
+ 1180      2D736563 
+ 1180      74696F6E 
+ 1181              	.LASF26:
+ 1182 0187 6E6F5F65 		.ascii	"no_error\000"
+ 1182      72726F72 
+ 1182      00
+ 1183              	.LASF53:
+ 1184 0190 73706565 		.ascii	"speed_measure_isr\000"
+ 1184      645F6D65 
+ 1184      61737572 
+ 1184      655F6973 
+ 1184      7200
+ 1185              	.LASF13:
+ 1186 01a2 646F7562 		.ascii	"double\000"
+ 1186      6C6500
+ 1187              	.LASF38:
+ 1188 01a9 55495F43 		.ascii	"UI_Cmd\000"
+ 1188      6D6400
+ 1189              	.LASF2:
+ 1190 01b0 73686F72 		.ascii	"short int\000"
+ 1190      7420696E 
+ 1190      7400
+ 1191              	.LASF10:
+ 1192 01ba 75696E74 		.ascii	"uint16\000"
+ 1192      313600
+ 1193              	.LASF11:
+ 1194 01c1 75696E74 		.ascii	"uint32\000"
+ 1194      333200
+ 1195              	.LASF1:
+ 1196 01c8 756E7369 		.ascii	"unsigned char\000"
+ 1196      676E6564 
+ 1196      20636861 
+ 1196      7200
+ 1197              	.LASF8:
+ 1198 01d6 756E7369 		.ascii	"unsigned int\000"
+ 1198      676E6564 
+ 1198      20696E74 
+ 1198      00
+ 1199              	.LASF7:
+ 1200 01e3 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1200      206C6F6E 
+ 1200      6720756E 
+ 1200      7369676E 
+ 1200      65642069 
+ 1201              	.LASF33:
+ 1202 01fa 6F766572 		.ascii	"over_current_isr\000"
+ 1202      5F637572 
+ 1202      72656E74 
+ 1202      5F697372 
+ 1202      00
+ 1203              	.LASF27:
+ 1204 020b 6F766572 		.ascii	"overCur\000"
+ 1204      43757200 
+ 1205              	.LASF17:
+ 1206 0213 55495F43 		.ascii	"UI_CMD\000"
+ 1206      4D4400
+ 1207              	.LASF30:
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 28
+
+
+ 1208 021a 68696768 		.ascii	"highVolt\000"
+ 1208      566F6C74 
+ 1208      00
+ 1209              	.LASF43:
+ 1210 0223 70726543 		.ascii	"preCntCaptur\000"
+ 1210      6E744361 
+ 1210      70747572 
+ 1210      00
+ 1211              	.LASF16:
+ 1212 0230 73697A65 		.ascii	"sizetype\000"
+ 1212      74797065 
+ 1212      00
+ 1213              	.LASF51:
+ 1214 0239 433A5C55 		.ascii	"C:\\Users\\IlyR\\OneDrive - The University of Manch"
+ 1214      73657273 
+ 1214      5C496C79 
+ 1214      525C4F6E 
+ 1214      65447269 
+ 1215 0269 65737465 		.ascii	"ester\\EEE MTE SEM2\\3YP\\control\\speed_control_v1"
+ 1215      725C4545 
+ 1215      45204D54 
+ 1215      45205345 
+ 1215      4D325C33 
+ 1216 0298 5C53656E 		.ascii	"\\Sensored BLDC Motor Control\\Sensored BLDC Motor "
+ 1216      736F7265 
+ 1216      6420424C 
+ 1216      4443204D 
+ 1216      6F746F72 
+ 1217 02c9 436F6E74 		.ascii	"Control.cydsn\000"
+ 1217      726F6C2E 
+ 1217      63796473 
+ 1217      6E00
+ 1218              	.LASF14:
+ 1219 02d7 63686172 		.ascii	"char\000"
+ 1219      00
+ 1220              	.LASF24:
+ 1221 02dc 6D617843 		.ascii	"maxCurr\000"
+ 1221      75727200 
+ 1222              	.LASF48:
+ 1223 02e4 6F63426C 		.ascii	"ocBlankCnt\000"
+ 1223      616E6B43 
+ 1223      6E7400
+ 1224              	.LASF25:
+ 1225 02ef 55495F44 		.ascii	"UI_DATA\000"
+ 1225      41544100 
+ 1226              	.LASF19:
+ 1227 02f7 73706565 		.ascii	"speedRpm\000"
+ 1227      6452706D 
+ 1227      00
+ 1228              	.LASF9:
+ 1229 0300 75696E74 		.ascii	"uint8\000"
+ 1229      3800
+ 1230              	.LASF42:
+ 1231 0306 70726553 		.ascii	"preSpeedCur\000"
+ 1231      70656564 
+ 1231      43757200 
+ 1232              	.LASF4:
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccvt2CQf.s 			page 29
+
+
+ 1233 0312 6C6F6E67 		.ascii	"long int\000"
+ 1233      20696E74 
+ 1233      00
+ 1234              	.LASF44:
+ 1235 031b 70776D43 		.ascii	"pwmCnt\000"
+ 1235      6E7400
+ 1236              	.LASF15:
+ 1237 0322 6C6F6E67 		.ascii	"long double\000"
+ 1237      20646F75 
+ 1237      626C6500 
+ 1238              	.LASF0:
+ 1239 032e 7369676E 		.ascii	"signed char\000"
+ 1239      65642063 
+ 1239      68617200 
+ 1240              	.LASF46:
+ 1241 033a 73746174 		.ascii	"stateSys\000"
+ 1241      65537973 
+ 1241      00
+ 1242              	.LASF40:
+ 1243 0343 73706565 		.ascii	"speedRef\000"
+ 1243      64526566 
+ 1243      00
+ 1244              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

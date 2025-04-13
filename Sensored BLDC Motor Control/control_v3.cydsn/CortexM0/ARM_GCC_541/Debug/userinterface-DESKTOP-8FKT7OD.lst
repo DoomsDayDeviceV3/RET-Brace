@@ -1,0 +1,1887 @@
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"userinterface.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	btnStatus,1,4
+  20              		.bss
+  21              		.align	2
+  22              	btnArray:
+  23 0000 000000   		.space	3
+  24 0003 00       		.align	2
+  25              	bcpTxBuffer:
+  26 0004 00000000 		.space	32
+  26      00000000 
+  26      00000000 
+  26      00000000 
+  26      00000000 
+  27              		.section	.text.ButtonInit,"ax",%progbits
+  28              		.align	2
+  29              		.global	ButtonInit
+  30              		.code	16
+  31              		.thumb_func
+  32              		.type	ButtonInit, %function
+  33              	ButtonInit:
+  34              	.LFB32:
+  35              		.file 1 "userinterface.c"
+   1:userinterface.c **** /*******************************************************************************
+   2:userinterface.c **** * Project Name		: Sensored BLDC Motor Control
+   3:userinterface.c **** * File Name			: userinterface.c
+   4:userinterface.c **** * Version			: 1.0
+   5:userinterface.c **** * Device Used		: CY8C4245AXI-483     
+   6:userinterface.c **** * Software Used		: PSoC Creator 4.2
+   7:userinterface.c **** * Compiler Used		: ARM GCC 5.4.1 
+   8:userinterface.c **** * Related Hardware  : CY8CKIT-042 PSoC 4 Pioneer Kit + CY8CKIT-037 PSoC 4
+   9:userinterface.c **** *                     Motor Control Evaluation Kit
+  10:userinterface.c **** ******************************************************************************
+  11:userinterface.c **** * Copyright (2018), Cypress Semiconductor Corporation. All rights reserved.
+  12:userinterface.c **** *******************************************************************************
+  13:userinterface.c **** * This software, including source code, documentation and related materials
+  14:userinterface.c **** * (“Software”), is owned by Cypress Semiconductor Corporation or one of its
+  15:userinterface.c **** * subsidiaries (“Cypress”) and is protected by and subject to worldwide patent
+  16:userinterface.c **** * protection (United States and foreign), United States copyright laws and
+  17:userinterface.c **** * international treaty provisions. Therefore, you may use this Software only
+  18:userinterface.c **** * as provided in the license agreement accompanying the software package from
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 2
+
+
+  19:userinterface.c **** * which you obtained this Software (“EULA”).
+  20:userinterface.c **** *
+  21:userinterface.c **** * If no EULA applies, Cypress hereby grants you a personal, nonexclusive,
+  22:userinterface.c **** * non-transferable license to copy, modify, and compile the Software source
+  23:userinterface.c **** * code solely for use in connection with Cypress’s integrated circuit products.
+  24:userinterface.c **** * Any reproduction, modification, translation, compilation, or representation
+  25:userinterface.c **** * of this Software except as specified above is prohibited without the express
+  26:userinterface.c **** * written permission of Cypress.
+  27:userinterface.c **** *
+  28:userinterface.c **** * Disclaimer: THIS SOFTWARE IS PROVIDED AS-IS, WITH NO WARRANTY OF ANY KIND, 
+  29:userinterface.c **** * EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, NONINFRINGEMENT, IMPLIED 
+  30:userinterface.c **** * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. Cypress 
+  31:userinterface.c **** * reserves the right to make changes to the Software without notice. Cypress 
+  32:userinterface.c **** * does not assume any liability arising out of the application or use of the 
+  33:userinterface.c **** * Software or any product or circuit described in the Software. Cypress does 
+  34:userinterface.c **** * not authorize its products for use in any products where a malfunction or 
+  35:userinterface.c **** * failure of the Cypress product may reasonably be expected to result in 
+  36:userinterface.c **** * significant property damage, injury or death (“High Risk Product”). By 
+  37:userinterface.c **** * including Cypress’s product in a High Risk Product, the manufacturer of such 
+  38:userinterface.c **** * system or application assumes all risk of such use and in doing so agrees to 
+  39:userinterface.c **** * indemnify Cypress against all liability.
+  40:userinterface.c **** *******************************************************************************/
+  41:userinterface.c **** #include <project.h>
+  42:userinterface.c **** #include "motor.h"
+  43:userinterface.c **** #include "getvalue.h"
+  44:userinterface.c **** #include "userinterface.h"
+  45:userinterface.c **** 
+  46:userinterface.c **** 
+  47:userinterface.c **** /******************************************************************************
+  48:userinterface.c ****  * Global variables definition
+  49:userinterface.c ****  * ----------------------------------------------------------------------------
+  50:userinterface.c ****  * These variables should be populated to other modules. Header file contains 
+  51:userinterface.c ****  * the extern statement for these variables.
+  52:userinterface.c ****  ******************************************************************************/ 
+  53:userinterface.c **** 
+  54:userinterface.c **** /* press status for button SW2, default is BUTTON_OFF */
+  55:userinterface.c **** uint8 btnStatus[BTN_COUNT];
+  56:userinterface.c **** 
+  57:userinterface.c **** /******************************************************************************
+  58:userinterface.c ****  * Local Macro definition
+  59:userinterface.c ****  * ----------------------------------------------------------------------------
+  60:userinterface.c ****  * These Macros are only used in this module. These Macros should not be 
+  61:userinterface.c ****  * populated to other modules.
+  62:userinterface.c ****  ******************************************************************************/
+  63:userinterface.c **** #define BTN_LOW_LEVEL                       (uint8)(0x00)
+  64:userinterface.c **** #define BTN_HIHG_LEVEL                      (uint8)(0x01)
+  65:userinterface.c **** 
+  66:userinterface.c **** /* this macro defines the initial level when starting to detect button pressing */
+  67:userinterface.c **** #define BTN_OFF_LEVEL                       BTN_HIHG_LEVEL
+  68:userinterface.c **** /* this macro defines the desired level when button is pressed */
+  69:userinterface.c **** #define BTN_ON_LEVEL                        BTN_LOW_LEVEL
+  70:userinterface.c **** 
+  71:userinterface.c **** /* debounce count for button glitch filter */
+  72:userinterface.c **** #define BTN_GLITCH_FILTER_ACTIVE_CNT        (uint8)(15)
+  73:userinterface.c **** #define BTN_GLITCH_FILTER_DISCARD_CNT       (uint8)(5)
+  74:userinterface.c **** #define BTN_GLITCH_FILTER_INIT_CNT          (uint8)(10)
+  75:userinterface.c **** 
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 3
+
+
+  76:userinterface.c **** /******************************************************************************
+  77:userinterface.c ****  * Local variables definition
+  78:userinterface.c ****  * ----------------------------------------------------------------------------
+  79:userinterface.c ****  * These variables are only used in this module. These variables should not be 
+  80:userinterface.c ****  * populated to other modules.
+  81:userinterface.c ****  ******************************************************************************/
+  82:userinterface.c **** typedef struct _Btn_Status_T
+  83:userinterface.c **** {
+  84:userinterface.c ****     uint8   preBtnStatus;                   /* variable to store last status of button level  */
+  85:userinterface.c ****     uint8   glitchFilter;                   /* glitch filter counter for button pressing */
+  86:userinterface.c ****     uint8   btnIsDetectFlag;                 /* flag to store button pressing event */ 
+  87:userinterface.c **** }Btn_Status_T;
+  88:userinterface.c **** 
+  89:userinterface.c **** static Btn_Status_T btnArray[BTN_COUNT];
+  90:userinterface.c **** 
+  91:userinterface.c **** static uint8 bcpTxBuffer[32];
+  92:userinterface.c **** 
+  93:userinterface.c **** /*******************************************************************************
+  94:userinterface.c **** * Function Name: Button_Init
+  95:userinterface.c **** ********************************************************************************
+  96:userinterface.c **** * Summary:
+  97:userinterface.c **** *   Initialize button status structure to detect pressing event
+  98:userinterface.c **** *
+  99:userinterface.c **** * Parameters:  
+ 100:userinterface.c **** *   void
+ 101:userinterface.c **** *
+ 102:userinterface.c **** * Return: 
+ 103:userinterface.c **** *   void
+ 104:userinterface.c **** *
+ 105:userinterface.c **** *******************************************************************************/
+ 106:userinterface.c **** void ButtonInit(void)
+ 107:userinterface.c **** {
+  36              		.loc 1 107 0
+  37              		.cfi_startproc
+  38              		@ args = 0, pretend = 0, frame = 8
+  39              		@ frame_needed = 1, uses_anonymous_args = 0
+  40 0000 80B5     		push	{r7, lr}
+  41              		.cfi_def_cfa_offset 8
+  42              		.cfi_offset 7, -8
+  43              		.cfi_offset 14, -4
+  44 0002 82B0     		sub	sp, sp, #8
+  45              		.cfi_def_cfa_offset 16
+  46 0004 00AF     		add	r7, sp, #0
+  47              		.cfi_def_cfa_register 7
+ 108:userinterface.c ****     uint8 i = 0;
+  48              		.loc 1 108 0
+  49 0006 FB1D     		adds	r3, r7, #7
+  50 0008 0022     		movs	r2, #0
+  51 000a 1A70     		strb	r2, [r3]
+ 109:userinterface.c ****     
+ 110:userinterface.c ****     for(i = 0; i < BTN_COUNT; i++)
+  52              		.loc 1 110 0
+  53 000c FB1D     		adds	r3, r7, #7
+  54 000e 0022     		movs	r2, #0
+  55 0010 1A70     		strb	r2, [r3]
+  56 0012 20E0     		b	.L2
+  57              	.L3:
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 4
+
+
+ 111:userinterface.c ****     {
+ 112:userinterface.c ****         btnArray[i].preBtnStatus = BTN_OFF_LEVEL;
+  58              		.loc 1 112 0 discriminator 3
+  59 0014 FB1D     		adds	r3, r7, #7
+  60 0016 1A78     		ldrb	r2, [r3]
+  61 0018 1349     		ldr	r1, .L4
+  62 001a 1300     		movs	r3, r2
+  63 001c 5B00     		lsls	r3, r3, #1
+  64 001e 9B18     		adds	r3, r3, r2
+  65 0020 0122     		movs	r2, #1
+  66 0022 5A54     		strb	r2, [r3, r1]
+ 113:userinterface.c ****         btnArray[i].glitchFilter = BTN_GLITCH_FILTER_INIT_CNT;
+  67              		.loc 1 113 0 discriminator 3
+  68 0024 FB1D     		adds	r3, r7, #7
+  69 0026 1A78     		ldrb	r2, [r3]
+  70 0028 0F49     		ldr	r1, .L4
+  71 002a 1300     		movs	r3, r2
+  72 002c 5B00     		lsls	r3, r3, #1
+  73 002e 9B18     		adds	r3, r3, r2
+  74 0030 CB18     		adds	r3, r1, r3
+  75 0032 0133     		adds	r3, r3, #1
+  76 0034 0A22     		movs	r2, #10
+  77 0036 1A70     		strb	r2, [r3]
+ 114:userinterface.c ****         btnArray[i].btnIsDetectFlag = FALSE;
+  78              		.loc 1 114 0 discriminator 3
+  79 0038 FB1D     		adds	r3, r7, #7
+  80 003a 1A78     		ldrb	r2, [r3]
+  81 003c 0A49     		ldr	r1, .L4
+  82 003e 1300     		movs	r3, r2
+  83 0040 5B00     		lsls	r3, r3, #1
+  84 0042 9B18     		adds	r3, r3, r2
+  85 0044 CB18     		adds	r3, r1, r3
+  86 0046 0233     		adds	r3, r3, #2
+  87 0048 0022     		movs	r2, #0
+  88 004a 1A70     		strb	r2, [r3]
+ 110:userinterface.c ****     {
+  89              		.loc 1 110 0 discriminator 3
+  90 004c FB1D     		adds	r3, r7, #7
+  91 004e 1A78     		ldrb	r2, [r3]
+  92 0050 FB1D     		adds	r3, r7, #7
+  93 0052 0132     		adds	r2, r2, #1
+  94 0054 1A70     		strb	r2, [r3]
+  95              	.L2:
+ 110:userinterface.c ****     {
+  96              		.loc 1 110 0 is_stmt 0 discriminator 1
+  97 0056 FB1D     		adds	r3, r7, #7
+  98 0058 1B78     		ldrb	r3, [r3]
+  99 005a 002B     		cmp	r3, #0
+ 100 005c DAD0     		beq	.L3
+ 115:userinterface.c ****     }
+ 116:userinterface.c **** }
+ 101              		.loc 1 116 0 is_stmt 1
+ 102 005e C046     		nop
+ 103 0060 BD46     		mov	sp, r7
+ 104 0062 02B0     		add	sp, sp, #8
+ 105              		@ sp needed
+ 106 0064 80BD     		pop	{r7, pc}
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 5
+
+
+ 107              	.L5:
+ 108 0066 C046     		.align	2
+ 109              	.L4:
+ 110 0068 00000000 		.word	btnArray
+ 111              		.cfi_endproc
+ 112              	.LFE32:
+ 113              		.size	ButtonInit, .-ButtonInit
+ 114              		.section	.text.ButtonPressDetect,"ax",%progbits
+ 115              		.align	2
+ 116              		.global	ButtonPressDetect
+ 117              		.code	16
+ 118              		.thumb_func
+ 119              		.type	ButtonPressDetect, %function
+ 120              	ButtonPressDetect:
+ 121              	.LFB33:
+ 117:userinterface.c **** 
+ 118:userinterface.c **** /*******************************************************************************
+ 119:userinterface.c **** * Function Name: ButtonPressDetect
+ 120:userinterface.c **** ********************************************************************************
+ 121:userinterface.c **** * Summary:
+ 122:userinterface.c **** *   Detect button status for pressing event
+ 123:userinterface.c **** *
+ 124:userinterface.c **** * Parameters:  
+ 125:userinterface.c **** *   void
+ 126:userinterface.c **** *
+ 127:userinterface.c **** * Return: 
+ 128:userinterface.c **** *   void
+ 129:userinterface.c **** *
+ 130:userinterface.c **** *******************************************************************************/
+ 131:userinterface.c **** void ButtonPressDetect(uint8 btnStatus, Btn_Status_T* btnArrayPtr, uint8* btnStatusPtr)
+ 132:userinterface.c **** {
+ 122              		.loc 1 132 0
+ 123              		.cfi_startproc
+ 124              		@ args = 0, pretend = 0, frame = 24
+ 125              		@ frame_needed = 1, uses_anonymous_args = 0
+ 126 0000 80B5     		push	{r7, lr}
+ 127              		.cfi_def_cfa_offset 8
+ 128              		.cfi_offset 7, -8
+ 129              		.cfi_offset 14, -4
+ 130 0002 86B0     		sub	sp, sp, #24
+ 131              		.cfi_def_cfa_offset 32
+ 132 0004 00AF     		add	r7, sp, #0
+ 133              		.cfi_def_cfa_register 7
+ 134 0006 B960     		str	r1, [r7, #8]
+ 135 0008 7A60     		str	r2, [r7, #4]
+ 136 000a 0F23     		movs	r3, #15
+ 137 000c FB18     		adds	r3, r7, r3
+ 138 000e 021C     		adds	r2, r0, #0
+ 139 0010 1A70     		strb	r2, [r3]
+ 133:userinterface.c ****     uint8 curBtnStatus = btnStatus;    /* get current button level status */
+ 140              		.loc 1 133 0
+ 141 0012 1723     		movs	r3, #23
+ 142 0014 FB18     		adds	r3, r7, r3
+ 143 0016 0F22     		movs	r2, #15
+ 144 0018 BA18     		adds	r2, r7, r2
+ 145 001a 1278     		ldrb	r2, [r2]
+ 146 001c 1A70     		strb	r2, [r3]
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 6
+
+
+ 134:userinterface.c ****     if(btnArrayPtr->btnIsDetectFlag == FALSE)          
+ 147              		.loc 1 134 0
+ 148 001e BB68     		ldr	r3, [r7, #8]
+ 149 0020 9B78     		ldrb	r3, [r3, #2]
+ 150 0022 002B     		cmp	r3, #0
+ 151 0024 12D1     		bne	.L7
+ 135:userinterface.c ****     {
+ 136:userinterface.c ****         /* detect button pressing event */
+ 137:userinterface.c ****         btnArrayPtr->btnIsDetectFlag = ((curBtnStatus == BTN_ON_LEVEL) && 
+ 138:userinterface.c ****                                        (curBtnStatus ^ btnArrayPtr->preBtnStatus)) ? TRUE : FALSE;
+ 152              		.loc 1 138 0
+ 153 0026 1723     		movs	r3, #23
+ 154 0028 FB18     		adds	r3, r7, r3
+ 155 002a 1B78     		ldrb	r3, [r3]
+ 156 002c 002B     		cmp	r3, #0
+ 157 002e 08D1     		bne	.L8
+ 158              		.loc 1 138 0 is_stmt 0 discriminator 1
+ 159 0030 BB68     		ldr	r3, [r7, #8]
+ 160 0032 1B78     		ldrb	r3, [r3]
+ 161 0034 1722     		movs	r2, #23
+ 162 0036 BA18     		adds	r2, r7, r2
+ 163 0038 1278     		ldrb	r2, [r2]
+ 164 003a 9A42     		cmp	r2, r3
+ 165 003c 01D0     		beq	.L8
+ 166              		.loc 1 138 0 discriminator 3
+ 167 003e 0123     		movs	r3, #1
+ 168 0040 00E0     		b	.L9
+ 169              	.L8:
+ 170              		.loc 1 138 0 discriminator 4
+ 171 0042 0023     		movs	r3, #0
+ 172              	.L9:
+ 137:userinterface.c ****                                        (curBtnStatus ^ btnArrayPtr->preBtnStatus)) ? TRUE : FALSE;
+ 173              		.loc 1 137 0 is_stmt 1
+ 174 0044 DAB2     		uxtb	r2, r3
+ 175 0046 BB68     		ldr	r3, [r7, #8]
+ 176 0048 9A70     		strb	r2, [r3, #2]
+ 177 004a 2EE0     		b	.L10
+ 178              	.L7:
+ 139:userinterface.c ****     }
+ 140:userinterface.c ****     else
+ 141:userinterface.c ****     {
+ 142:userinterface.c ****         if(curBtnStatus == BTN_ON_LEVEL)   /* button keeps in desired level status */
+ 179              		.loc 1 142 0
+ 180 004c 1723     		movs	r3, #23
+ 181 004e FB18     		adds	r3, r7, r3
+ 182 0050 1B78     		ldrb	r3, [r3]
+ 183 0052 002B     		cmp	r3, #0
+ 184 0054 18D1     		bne	.L11
+ 143:userinterface.c ****         {            
+ 144:userinterface.c ****             /*  detect if glitch filter counter value is larger than pre-defined threshold */
+ 145:userinterface.c ****             if(btnArrayPtr->glitchFilter > BTN_GLITCH_FILTER_ACTIVE_CNT)
+ 185              		.loc 1 145 0
+ 186 0056 BB68     		ldr	r3, [r7, #8]
+ 187 0058 5B78     		ldrb	r3, [r3, #1]
+ 188 005a 0F2B     		cmp	r3, #15
+ 189 005c 0DD9     		bls	.L12
+ 146:userinterface.c ****             {
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 7
+
+
+ 147:userinterface.c ****                 /* succeed in button pressing detection, invert button ON/OFF status */
+ 148:userinterface.c ****                 *btnStatusPtr = *btnStatusPtr ^ BUTTON_ON;
+ 190              		.loc 1 148 0
+ 191 005e 7B68     		ldr	r3, [r7, #4]
+ 192 0060 1B78     		ldrb	r3, [r3]
+ 193 0062 0122     		movs	r2, #1
+ 194 0064 5340     		eors	r3, r2
+ 195 0066 DAB2     		uxtb	r2, r3
+ 196 0068 7B68     		ldr	r3, [r7, #4]
+ 197 006a 1A70     		strb	r2, [r3]
+ 149:userinterface.c ****                 /* reset glitch filter counter */
+ 150:userinterface.c ****                 btnArrayPtr->glitchFilter = BTN_GLITCH_FILTER_INIT_CNT;
+ 198              		.loc 1 150 0
+ 199 006c BB68     		ldr	r3, [r7, #8]
+ 200 006e 0A22     		movs	r2, #10
+ 201 0070 5A70     		strb	r2, [r3, #1]
+ 151:userinterface.c ****                 /* clear detection flag */
+ 152:userinterface.c ****                 btnArrayPtr->btnIsDetectFlag = FALSE;
+ 202              		.loc 1 152 0
+ 203 0072 BB68     		ldr	r3, [r7, #8]
+ 204 0074 0022     		movs	r2, #0
+ 205 0076 9A70     		strb	r2, [r3, #2]
+ 206 0078 17E0     		b	.L10
+ 207              	.L12:
+ 153:userinterface.c ****             }
+ 154:userinterface.c ****             else
+ 155:userinterface.c ****             {
+ 156:userinterface.c ****                 /* increase glitch filter counter */
+ 157:userinterface.c ****                 btnArrayPtr->glitchFilter++; 
+ 208              		.loc 1 157 0
+ 209 007a BB68     		ldr	r3, [r7, #8]
+ 210 007c 5B78     		ldrb	r3, [r3, #1]
+ 211 007e 0133     		adds	r3, r3, #1
+ 212 0080 DAB2     		uxtb	r2, r3
+ 213 0082 BB68     		ldr	r3, [r7, #8]
+ 214 0084 5A70     		strb	r2, [r3, #1]
+ 215 0086 10E0     		b	.L10
+ 216              	.L11:
+ 158:userinterface.c ****             }
+ 159:userinterface.c ****         }
+ 160:userinterface.c ****         else
+ 161:userinterface.c ****         {
+ 162:userinterface.c ****             if(btnArrayPtr->glitchFilter < BTN_GLITCH_FILTER_DISCARD_CNT)
+ 217              		.loc 1 162 0
+ 218 0088 BB68     		ldr	r3, [r7, #8]
+ 219 008a 5B78     		ldrb	r3, [r3, #1]
+ 220 008c 042B     		cmp	r3, #4
+ 221 008e 06D8     		bhi	.L14
+ 163:userinterface.c ****             {
+ 164:userinterface.c ****                 /* keep buttons status unchanged, reset glitch filter counter */
+ 165:userinterface.c ****                 btnArrayPtr->glitchFilter = BTN_GLITCH_FILTER_INIT_CNT;
+ 222              		.loc 1 165 0
+ 223 0090 BB68     		ldr	r3, [r7, #8]
+ 224 0092 0A22     		movs	r2, #10
+ 225 0094 5A70     		strb	r2, [r3, #1]
+ 166:userinterface.c ****                 /* clear detection flag */
+ 167:userinterface.c ****                 btnArrayPtr->btnIsDetectFlag = FALSE;
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 8
+
+
+ 226              		.loc 1 167 0
+ 227 0096 BB68     		ldr	r3, [r7, #8]
+ 228 0098 0022     		movs	r2, #0
+ 229 009a 9A70     		strb	r2, [r3, #2]
+ 230 009c 05E0     		b	.L10
+ 231              	.L14:
+ 168:userinterface.c ****             }
+ 169:userinterface.c ****             else
+ 170:userinterface.c ****             {
+ 171:userinterface.c ****                  /* decrease glitch filter counter */
+ 172:userinterface.c ****                 btnArrayPtr->glitchFilter--; 
+ 232              		.loc 1 172 0
+ 233 009e BB68     		ldr	r3, [r7, #8]
+ 234 00a0 5B78     		ldrb	r3, [r3, #1]
+ 235 00a2 013B     		subs	r3, r3, #1
+ 236 00a4 DAB2     		uxtb	r2, r3
+ 237 00a6 BB68     		ldr	r3, [r7, #8]
+ 238 00a8 5A70     		strb	r2, [r3, #1]
+ 239              	.L10:
+ 173:userinterface.c ****             }
+ 174:userinterface.c ****         }
+ 175:userinterface.c ****     }
+ 176:userinterface.c ****     /* update last button status with current status */
+ 177:userinterface.c ****     btnArrayPtr->preBtnStatus = curBtnStatus;
+ 240              		.loc 1 177 0
+ 241 00aa BB68     		ldr	r3, [r7, #8]
+ 242 00ac 1722     		movs	r2, #23
+ 243 00ae BA18     		adds	r2, r7, r2
+ 244 00b0 1278     		ldrb	r2, [r2]
+ 245 00b2 1A70     		strb	r2, [r3]
+ 178:userinterface.c **** }
+ 246              		.loc 1 178 0
+ 247 00b4 C046     		nop
+ 248 00b6 BD46     		mov	sp, r7
+ 249 00b8 06B0     		add	sp, sp, #24
+ 250              		@ sp needed
+ 251 00ba 80BD     		pop	{r7, pc}
+ 252              		.cfi_endproc
+ 253              	.LFE33:
+ 254              		.size	ButtonPressDetect, .-ButtonPressDetect
+ 255              		.section	.text.ButtonProcess,"ax",%progbits
+ 256              		.align	2
+ 257              		.global	ButtonProcess
+ 258              		.code	16
+ 259              		.thumb_func
+ 260              		.type	ButtonProcess, %function
+ 261              	ButtonProcess:
+ 262              	.LFB34:
+ 179:userinterface.c **** 
+ 180:userinterface.c **** /*******************************************************************************
+ 181:userinterface.c **** * Function Name: ButtonProcess
+ 182:userinterface.c **** ********************************************************************************
+ 183:userinterface.c **** * Summary:   
+ 184:userinterface.c **** * This function detects the press action of button.
+ 185:userinterface.c **** *
+ 186:userinterface.c **** * Parameters: None 
+ 187:userinterface.c **** *  
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 9
+
+
+ 188:userinterface.c **** * Return: None
+ 189:userinterface.c **** *
+ 190:userinterface.c **** *******************************************************************************/
+ 191:userinterface.c **** void ButtonProcess(void)
+ 192:userinterface.c **** {
+ 263              		.loc 1 192 0
+ 264              		.cfi_startproc
+ 265              		@ args = 0, pretend = 0, frame = 0
+ 266              		@ frame_needed = 1, uses_anonymous_args = 0
+ 267 0000 80B5     		push	{r7, lr}
+ 268              		.cfi_def_cfa_offset 8
+ 269              		.cfi_offset 7, -8
+ 270              		.cfi_offset 14, -4
+ 271 0002 00AF     		add	r7, sp, #0
+ 272              		.cfi_def_cfa_register 7
+ 193:userinterface.c ****     ButtonPressDetect(SW2_Read(), &btnArray[0], &btnStatus[0]);
+ 273              		.loc 1 193 0
+ 274 0004 FFF7FEFF 		bl	SW2_Read
+ 275 0008 0300     		movs	r3, r0
+ 276 000a 1800     		movs	r0, r3
+ 277 000c 0C4A     		ldr	r2, .L19
+ 278 000e 0D4B     		ldr	r3, .L19+4
+ 279 0010 1900     		movs	r1, r3
+ 280 0012 FFF7FEFF 		bl	ButtonPressDetect
+ 194:userinterface.c ****     if(btnStatus[0] == BUTTON_ON)
+ 281              		.loc 1 194 0
+ 282 0016 0A4B     		ldr	r3, .L19
+ 283 0018 1B78     		ldrb	r3, [r3]
+ 284 001a 012B     		cmp	r3, #1
+ 285 001c 06D1     		bne	.L16
+ 195:userinterface.c ****     {
+ 196:userinterface.c ****         UI_Cmd.run = TRUE;	
+ 286              		.loc 1 196 0
+ 287 001e 0A4B     		ldr	r3, .L19+8
+ 288 0020 0122     		movs	r2, #1
+ 289 0022 1A70     		strb	r2, [r3]
+ 197:userinterface.c **** 	    stateSys = STATUS_RUN;
+ 290              		.loc 1 197 0
+ 291 0024 094B     		ldr	r3, .L19+12
+ 292 0026 0122     		movs	r2, #1
+ 293 0028 1A70     		strb	r2, [r3]
+ 198:userinterface.c ****     }
+ 199:userinterface.c ****     else
+ 200:userinterface.c ****     {
+ 201:userinterface.c ****         UI_Cmd.run = FALSE; 	
+ 202:userinterface.c **** 	    stateSys = STATUS_STOP;
+ 203:userinterface.c ****     }
+ 204:userinterface.c **** }
+ 294              		.loc 1 204 0
+ 295 002a 05E0     		b	.L18
+ 296              	.L16:
+ 201:userinterface.c **** 	    stateSys = STATUS_STOP;
+ 297              		.loc 1 201 0
+ 298 002c 064B     		ldr	r3, .L19+8
+ 299 002e 0022     		movs	r2, #0
+ 300 0030 1A70     		strb	r2, [r3]
+ 202:userinterface.c ****     }
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 10
+
+
+ 301              		.loc 1 202 0
+ 302 0032 064B     		ldr	r3, .L19+12
+ 303 0034 0222     		movs	r2, #2
+ 304 0036 1A70     		strb	r2, [r3]
+ 305              	.L18:
+ 306              		.loc 1 204 0
+ 307 0038 C046     		nop
+ 308 003a BD46     		mov	sp, r7
+ 309              		@ sp needed
+ 310 003c 80BD     		pop	{r7, pc}
+ 311              	.L20:
+ 312 003e C046     		.align	2
+ 313              	.L19:
+ 314 0040 00000000 		.word	btnStatus
+ 315 0044 00000000 		.word	btnArray
+ 316 0048 00000000 		.word	UI_Cmd
+ 317 004c 00000000 		.word	stateSys
+ 318              		.cfi_endproc
+ 319              	.LFE34:
+ 320              		.size	ButtonProcess, .-ButtonProcess
+ 321              		.section	.text.UpdateStatusInit,"ax",%progbits
+ 322              		.align	2
+ 323              		.global	UpdateStatusInit
+ 324              		.code	16
+ 325              		.thumb_func
+ 326              		.type	UpdateStatusInit, %function
+ 327              	UpdateStatusInit:
+ 328              	.LFB35:
+ 205:userinterface.c **** 
+ 206:userinterface.c **** /*******************************************************************************
+ 207:userinterface.c **** * Function Name: UpdateStatusStart
+ 208:userinterface.c **** ********************************************************************************
+ 209:userinterface.c **** * Summary:   
+ 210:userinterface.c **** * This function initialize the motor, and ready to start.
+ 211:userinterface.c **** *
+ 212:userinterface.c **** * Parameters: None 
+ 213:userinterface.c **** *  
+ 214:userinterface.c **** * Return: None
+ 215:userinterface.c **** *
+ 216:userinterface.c **** *******************************************************************************/
+ 217:userinterface.c **** void UpdateStatusInit(void)
+ 218:userinterface.c **** {
+ 329              		.loc 1 218 0
+ 330              		.cfi_startproc
+ 331              		@ args = 0, pretend = 0, frame = 0
+ 332              		@ frame_needed = 1, uses_anonymous_args = 0
+ 333 0000 80B5     		push	{r7, lr}
+ 334              		.cfi_def_cfa_offset 8
+ 335              		.cfi_offset 7, -8
+ 336              		.cfi_offset 14, -4
+ 337 0002 00AF     		add	r7, sp, #0
+ 338              		.cfi_def_cfa_register 7
+ 219:userinterface.c **** 	UI_Cmd.run = FALSE;
+ 339              		.loc 1 219 0
+ 340 0004 044B     		ldr	r3, .L22
+ 341 0006 0022     		movs	r2, #0
+ 342 0008 1A70     		strb	r2, [r3]
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 11
+
+
+ 220:userinterface.c **** 	stateSys = STATUS_STOP;	
+ 343              		.loc 1 220 0
+ 344 000a 044B     		ldr	r3, .L22+4
+ 345 000c 0222     		movs	r2, #2
+ 346 000e 1A70     		strb	r2, [r3]
+ 221:userinterface.c **** }
+ 347              		.loc 1 221 0
+ 348 0010 C046     		nop
+ 349 0012 BD46     		mov	sp, r7
+ 350              		@ sp needed
+ 351 0014 80BD     		pop	{r7, pc}
+ 352              	.L23:
+ 353 0016 C046     		.align	2
+ 354              	.L22:
+ 355 0018 00000000 		.word	UI_Cmd
+ 356 001c 00000000 		.word	stateSys
+ 357              		.cfi_endproc
+ 358              	.LFE35:
+ 359              		.size	UpdateStatusInit, .-UpdateStatusInit
+ 360              		.section	.text.UpdateStatusError,"ax",%progbits
+ 361              		.align	2
+ 362              		.global	UpdateStatusError
+ 363              		.code	16
+ 364              		.thumb_func
+ 365              		.type	UpdateStatusError, %function
+ 366              	UpdateStatusError:
+ 367              	.LFB36:
+ 222:userinterface.c **** 
+ 223:userinterface.c **** /*******************************************************************************
+ 224:userinterface.c **** * Function Name: UpdateStatusError
+ 225:userinterface.c **** ********************************************************************************
+ 226:userinterface.c **** * Summary:   
+ 227:userinterface.c **** * This function stop the motor and update error flag.
+ 228:userinterface.c **** *
+ 229:userinterface.c **** * Parameters: None 
+ 230:userinterface.c **** *  
+ 231:userinterface.c **** * Return: None
+ 232:userinterface.c **** *
+ 233:userinterface.c **** *******************************************************************************/
+ 234:userinterface.c **** void UpdateStatusError()
+ 235:userinterface.c **** {	
+ 368              		.loc 1 235 0
+ 369              		.cfi_startproc
+ 370              		@ args = 0, pretend = 0, frame = 0
+ 371              		@ frame_needed = 1, uses_anonymous_args = 0
+ 372 0000 80B5     		push	{r7, lr}
+ 373              		.cfi_def_cfa_offset 8
+ 374              		.cfi_offset 7, -8
+ 375              		.cfi_offset 14, -4
+ 376 0002 00AF     		add	r7, sp, #0
+ 377              		.cfi_def_cfa_register 7
+ 236:userinterface.c **** 	stateSys = STATUS_ERROR;	
+ 378              		.loc 1 236 0
+ 379 0004 024B     		ldr	r3, .L25
+ 380 0006 0322     		movs	r2, #3
+ 381 0008 1A70     		strb	r2, [r3]
+ 237:userinterface.c **** }
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 12
+
+
+ 382              		.loc 1 237 0
+ 383 000a C046     		nop
+ 384 000c BD46     		mov	sp, r7
+ 385              		@ sp needed
+ 386 000e 80BD     		pop	{r7, pc}
+ 387              	.L26:
+ 388              		.align	2
+ 389              	.L25:
+ 390 0010 00000000 		.word	stateSys
+ 391              		.cfi_endproc
+ 392              	.LFE36:
+ 393              		.size	UpdateStatusError, .-UpdateStatusError
+ 394              		.section	.text.BCPPoll,"ax",%progbits
+ 395              		.align	2
+ 396              		.global	BCPPoll
+ 397              		.code	16
+ 398              		.thumb_func
+ 399              		.type	BCPPoll, %function
+ 400              	BCPPoll:
+ 401              	.LFB37:
+ 238:userinterface.c **** 
+ 239:userinterface.c **** /****************************************************************************************
+ 240:userinterface.c **** *                                                                             
+ 241:userinterface.c **** *   Function:    BCPPoll                                                        
+ 242:userinterface.c **** *                                                                             
+ 243:userinterface.c **** *   Description: BCPPoll routine                                                   
+ 244:userinterface.c **** *             Format:  RX8 [h=55] @0speed @1speed [t=AA]                      
+ 245:userinterface.c **** *   Parameters:   None                                                          
+ 246:userinterface.c **** *                                                                                 
+ 247:userinterface.c **** *   Returns:     None                                                                 
+ 248:userinterface.c **** *                                                                                   
+ 249:userinterface.c **** ****************************************************************************************/
+ 250:userinterface.c **** 
+ 251:userinterface.c **** void BCPPoll()
+ 252:userinterface.c **** {
+ 402              		.loc 1 252 0
+ 403              		.cfi_startproc
+ 404              		@ args = 0, pretend = 0, frame = 8
+ 405              		@ frame_needed = 1, uses_anonymous_args = 0
+ 406 0000 80B5     		push	{r7, lr}
+ 407              		.cfi_def_cfa_offset 8
+ 408              		.cfi_offset 7, -8
+ 409              		.cfi_offset 14, -4
+ 410 0002 82B0     		sub	sp, sp, #8
+ 411              		.cfi_def_cfa_offset 16
+ 412 0004 00AF     		add	r7, sp, #0
+ 413              		.cfi_def_cfa_register 7
+ 253:userinterface.c ****     uint8 index = 0;
+ 414              		.loc 1 253 0
+ 415 0006 FB1D     		adds	r3, r7, #7
+ 416 0008 0022     		movs	r2, #0
+ 417 000a 1A70     		strb	r2, [r3]
+ 254:userinterface.c ****     
+ 255:userinterface.c ****     if(UART_BCP_SpiUartGetTxBufferSize())
+ 418              		.loc 1 255 0
+ 419 000c FFF7FEFF 		bl	UART_BCP_SpiUartGetTxBufferSize
+ 420 0010 031E     		subs	r3, r0, #0
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 13
+
+
+ 421 0012 49D1     		bne	.L30
+ 256:userinterface.c ****        return;
+ 257:userinterface.c ****     
+ 258:userinterface.c ****     /* package header */
+ 259:userinterface.c ****     bcpTxBuffer[index++] = 0x55;
+ 422              		.loc 1 259 0
+ 423 0014 FB1D     		adds	r3, r7, #7
+ 424 0016 1B78     		ldrb	r3, [r3]
+ 425 0018 FA1D     		adds	r2, r7, #7
+ 426 001a 591C     		adds	r1, r3, #1
+ 427 001c 1170     		strb	r1, [r2]
+ 428 001e 1A00     		movs	r2, r3
+ 429 0020 234B     		ldr	r3, .L31
+ 430 0022 5521     		movs	r1, #85
+ 431 0024 9954     		strb	r1, [r3, r2]
+ 260:userinterface.c ****     
+ 261:userinterface.c ****     /* construct BCP data package with speed value, MSB first */    
+ 262:userinterface.c ****     
+ 263:userinterface.c ****     /* current measured speed */
+ 264:userinterface.c ****     bcpTxBuffer[index++] = (uint8)((UI_Data.speedRpm & 0xFF00) >> 8);
+ 432              		.loc 1 264 0
+ 433 0026 FB1D     		adds	r3, r7, #7
+ 434 0028 1B78     		ldrb	r3, [r3]
+ 435 002a FA1D     		adds	r2, r7, #7
+ 436 002c 591C     		adds	r1, r3, #1
+ 437 002e 1170     		strb	r1, [r2]
+ 438 0030 1A00     		movs	r2, r3
+ 439 0032 204B     		ldr	r3, .L31+4
+ 440 0034 9B88     		ldrh	r3, [r3, #4]
+ 441 0036 1B0A     		lsrs	r3, r3, #8
+ 442 0038 9BB2     		uxth	r3, r3
+ 443 003a D9B2     		uxtb	r1, r3
+ 444 003c 1C4B     		ldr	r3, .L31
+ 445 003e 9954     		strb	r1, [r3, r2]
+ 265:userinterface.c ****     bcpTxBuffer[index++] = (uint8)(UI_Data.speedRpm & 0x00FF); 
+ 446              		.loc 1 265 0
+ 447 0040 FB1D     		adds	r3, r7, #7
+ 448 0042 1B78     		ldrb	r3, [r3]
+ 449 0044 FA1D     		adds	r2, r7, #7
+ 450 0046 591C     		adds	r1, r3, #1
+ 451 0048 1170     		strb	r1, [r2]
+ 452 004a 1A00     		movs	r2, r3
+ 453 004c 194B     		ldr	r3, .L31+4
+ 454 004e 9B88     		ldrh	r3, [r3, #4]
+ 455 0050 D9B2     		uxtb	r1, r3
+ 456 0052 174B     		ldr	r3, .L31
+ 457 0054 9954     		strb	r1, [r3, r2]
+ 266:userinterface.c ****     /* speed reference */
+ 267:userinterface.c ****     bcpTxBuffer[index++] = (uint8)((UI_Data.speedRpmRef & 0xFF00) >> 8);
+ 458              		.loc 1 267 0
+ 459 0056 FB1D     		adds	r3, r7, #7
+ 460 0058 1B78     		ldrb	r3, [r3]
+ 461 005a FA1D     		adds	r2, r7, #7
+ 462 005c 591C     		adds	r1, r3, #1
+ 463 005e 1170     		strb	r1, [r2]
+ 464 0060 1A00     		movs	r2, r3
+ 465 0062 144B     		ldr	r3, .L31+4
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 14
+
+
+ 466 0064 DB88     		ldrh	r3, [r3, #6]
+ 467 0066 1B0A     		lsrs	r3, r3, #8
+ 468 0068 9BB2     		uxth	r3, r3
+ 469 006a D9B2     		uxtb	r1, r3
+ 470 006c 104B     		ldr	r3, .L31
+ 471 006e 9954     		strb	r1, [r3, r2]
+ 268:userinterface.c ****     bcpTxBuffer[index++] = (uint8)(UI_Data.speedRpmRef & 0x00FF);   
+ 472              		.loc 1 268 0
+ 473 0070 FB1D     		adds	r3, r7, #7
+ 474 0072 1B78     		ldrb	r3, [r3]
+ 475 0074 FA1D     		adds	r2, r7, #7
+ 476 0076 591C     		adds	r1, r3, #1
+ 477 0078 1170     		strb	r1, [r2]
+ 478 007a 1A00     		movs	r2, r3
+ 479 007c 0D4B     		ldr	r3, .L31+4
+ 480 007e DB88     		ldrh	r3, [r3, #6]
+ 481 0080 D9B2     		uxtb	r1, r3
+ 482 0082 0B4B     		ldr	r3, .L31
+ 483 0084 9954     		strb	r1, [r3, r2]
+ 269:userinterface.c ****    
+ 270:userinterface.c ****     
+ 271:userinterface.c ****     /* package tail */
+ 272:userinterface.c ****     bcpTxBuffer[index++] = 0xAA;
+ 484              		.loc 1 272 0
+ 485 0086 FB1D     		adds	r3, r7, #7
+ 486 0088 1B78     		ldrb	r3, [r3]
+ 487 008a FA1D     		adds	r2, r7, #7
+ 488 008c 591C     		adds	r1, r3, #1
+ 489 008e 1170     		strb	r1, [r2]
+ 490 0090 1A00     		movs	r2, r3
+ 491 0092 074B     		ldr	r3, .L31
+ 492 0094 AA21     		movs	r1, #170
+ 493 0096 9954     		strb	r1, [r3, r2]
+ 273:userinterface.c ****     
+ 274:userinterface.c ****     UART_BCP_SpiUartPutArray(bcpTxBuffer, index);
+ 494              		.loc 1 274 0
+ 495 0098 FB1D     		adds	r3, r7, #7
+ 496 009a 1A78     		ldrb	r2, [r3]
+ 497 009c 044B     		ldr	r3, .L31
+ 498 009e 1100     		movs	r1, r2
+ 499 00a0 1800     		movs	r0, r3
+ 500 00a2 FFF7FEFF 		bl	UART_BCP_SpiUartPutArray
+ 501 00a6 00E0     		b	.L27
+ 502              	.L30:
+ 256:userinterface.c ****     
+ 503              		.loc 1 256 0
+ 504 00a8 C046     		nop
+ 505              	.L27:
+ 275:userinterface.c **** }
+ 506              		.loc 1 275 0
+ 507 00aa BD46     		mov	sp, r7
+ 508 00ac 02B0     		add	sp, sp, #8
+ 509              		@ sp needed
+ 510 00ae 80BD     		pop	{r7, pc}
+ 511              	.L32:
+ 512              		.align	2
+ 513              	.L31:
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 15
+
+
+ 514 00b0 04000000 		.word	bcpTxBuffer
+ 515 00b4 00000000 		.word	UI_Data
+ 516              		.cfi_endproc
+ 517              	.LFE37:
+ 518              		.size	BCPPoll, .-BCPPoll
+ 519              		.text
+ 520              	.Letext0:
+ 521              		.file 2 "Generated_Source\\PSoC4/cytypes.h"
+ 522              		.file 3 "motor.h"
+ 523              		.file 4 "userinterface.h"
+ 524              		.section	.debug_info,"",%progbits
+ 525              	.Ldebug_info0:
+ 526 0000 E0020000 		.4byte	0x2e0
+ 527 0004 0400     		.2byte	0x4
+ 528 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 529 000a 04       		.byte	0x4
+ 530 000b 01       		.uleb128 0x1
+ 531 000c EE000000 		.4byte	.LASF45
+ 532 0010 0C       		.byte	0xc
+ 533 0011 07030000 		.4byte	.LASF46
+ 534 0015 27020000 		.4byte	.LASF47
+ 535 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 536 001d 00000000 		.4byte	0
+ 537 0021 00000000 		.4byte	.Ldebug_line0
+ 538 0025 02       		.uleb128 0x2
+ 539 0026 01       		.byte	0x1
+ 540 0027 06       		.byte	0x6
+ 541 0028 23030000 		.4byte	.LASF0
+ 542 002c 02       		.uleb128 0x2
+ 543 002d 01       		.byte	0x1
+ 544 002e 08       		.byte	0x8
+ 545 002f B4000000 		.4byte	.LASF1
+ 546 0033 02       		.uleb128 0x2
+ 547 0034 02       		.byte	0x2
+ 548 0035 05       		.byte	0x5
+ 549 0036 B0010000 		.4byte	.LASF2
+ 550 003a 02       		.uleb128 0x2
+ 551 003b 02       		.byte	0x2
+ 552 003c 07       		.byte	0x7
+ 553 003d DB000000 		.4byte	.LASF3
+ 554 0041 02       		.uleb128 0x2
+ 555 0042 04       		.byte	0x4
+ 556 0043 05       		.byte	0x5
+ 557 0044 FE020000 		.4byte	.LASF4
+ 558 0048 02       		.uleb128 0x2
+ 559 0049 04       		.byte	0x4
+ 560 004a 07       		.byte	0x7
+ 561 004b C9000000 		.4byte	.LASF5
+ 562 004f 02       		.uleb128 0x2
+ 563 0050 08       		.byte	0x8
+ 564 0051 05       		.byte	0x5
+ 565 0052 00000000 		.4byte	.LASF6
+ 566 0056 02       		.uleb128 0x2
+ 567 0057 08       		.byte	0x8
+ 568 0058 07       		.byte	0x7
+ 569 0059 E0010000 		.4byte	.LASF7
+ 570 005d 03       		.uleb128 0x3
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 16
+
+
+ 571 005e 04       		.byte	0x4
+ 572 005f 05       		.byte	0x5
+ 573 0060 696E7400 		.ascii	"int\000"
+ 574 0064 02       		.uleb128 0x2
+ 575 0065 04       		.byte	0x4
+ 576 0066 07       		.byte	0x7
+ 577 0067 D3010000 		.4byte	.LASF8
+ 578 006b 04       		.uleb128 0x4
+ 579 006c EC020000 		.4byte	.LASF9
+ 580 0070 02       		.byte	0x2
+ 581 0071 E401     		.2byte	0x1e4
+ 582 0073 2C000000 		.4byte	0x2c
+ 583 0077 04       		.uleb128 0x4
+ 584 0078 BA010000 		.4byte	.LASF10
+ 585 007c 02       		.byte	0x2
+ 586 007d E501     		.2byte	0x1e5
+ 587 007f 3A000000 		.4byte	0x3a
+ 588 0083 02       		.uleb128 0x2
+ 589 0084 04       		.byte	0x4
+ 590 0085 04       		.byte	0x4
+ 591 0086 A4000000 		.4byte	.LASF11
+ 592 008a 02       		.uleb128 0x2
+ 593 008b 08       		.byte	0x8
+ 594 008c 04       		.byte	0x4
+ 595 008d A2010000 		.4byte	.LASF12
+ 596 0091 02       		.uleb128 0x2
+ 597 0092 01       		.byte	0x1
+ 598 0093 08       		.byte	0x8
+ 599 0094 C5020000 		.4byte	.LASF13
+ 600 0098 02       		.uleb128 0x2
+ 601 0099 08       		.byte	0x8
+ 602 009a 04       		.byte	0x4
+ 603 009b 17030000 		.4byte	.LASF14
+ 604 009f 02       		.uleb128 0x2
+ 605 00a0 04       		.byte	0x4
+ 606 00a1 07       		.byte	0x7
+ 607 00a2 1E020000 		.4byte	.LASF15
+ 608 00a6 05       		.uleb128 0x5
+ 609 00a7 04       		.byte	0x4
+ 610 00a8 6B000000 		.4byte	0x6b
+ 611 00ac 06       		.uleb128 0x6
+ 612 00ad 01       		.byte	0x1
+ 613 00ae 03       		.byte	0x3
+ 614 00af 46       		.byte	0x46
+ 615 00b0 C1000000 		.4byte	0xc1
+ 616 00b4 07       		.uleb128 0x7
+ 617 00b5 72756E00 		.ascii	"run\000"
+ 618 00b9 03       		.byte	0x3
+ 619 00ba 48       		.byte	0x48
+ 620 00bb 6B000000 		.4byte	0x6b
+ 621 00bf 00       		.byte	0
+ 622 00c0 00       		.byte	0
+ 623 00c1 08       		.uleb128 0x8
+ 624 00c2 C2000000 		.4byte	.LASF16
+ 625 00c6 03       		.byte	0x3
+ 626 00c7 49       		.byte	0x49
+ 627 00c8 AC000000 		.4byte	0xac
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 17
+
+
+ 628 00cc 06       		.uleb128 0x6
+ 629 00cd 12       		.byte	0x12
+ 630 00ce 03       		.byte	0x3
+ 631 00cf 4C       		.byte	0x4c
+ 632 00d0 4B010000 		.4byte	0x14b
+ 633 00d4 07       		.uleb128 0x7
+ 634 00d5 44697200 		.ascii	"Dir\000"
+ 635 00d9 03       		.byte	0x3
+ 636 00da 4E       		.byte	0x4e
+ 637 00db 6B000000 		.4byte	0x6b
+ 638 00df 00       		.byte	0
+ 639 00e0 09       		.uleb128 0x9
+ 640 00e1 AA000000 		.4byte	.LASF17
+ 641 00e5 03       		.byte	0x3
+ 642 00e6 50       		.byte	0x50
+ 643 00e7 77000000 		.4byte	0x77
+ 644 00eb 02       		.byte	0x2
+ 645 00ec 09       		.uleb128 0x9
+ 646 00ed E3020000 		.4byte	.LASF18
+ 647 00f1 03       		.byte	0x3
+ 648 00f2 51       		.byte	0x51
+ 649 00f3 77000000 		.4byte	0x77
+ 650 00f7 04       		.byte	0x4
+ 651 00f8 09       		.uleb128 0x9
+ 652 00f9 51000000 		.4byte	.LASF19
+ 653 00fd 03       		.byte	0x3
+ 654 00fe 52       		.byte	0x52
+ 655 00ff 77000000 		.4byte	0x77
+ 656 0103 06       		.byte	0x6
+ 657 0104 07       		.uleb128 0x7
+ 658 0105 6B7000   		.ascii	"kp\000"
+ 659 0108 03       		.byte	0x3
+ 660 0109 54       		.byte	0x54
+ 661 010a 77000000 		.4byte	0x77
+ 662 010e 08       		.byte	0x8
+ 663 010f 07       		.uleb128 0x7
+ 664 0110 6B6900   		.ascii	"ki\000"
+ 665 0113 03       		.byte	0x3
+ 666 0114 55       		.byte	0x55
+ 667 0115 77000000 		.4byte	0x77
+ 668 0119 0A       		.byte	0xa
+ 669 011a 09       		.uleb128 0x9
+ 670 011b 89010000 		.4byte	.LASF20
+ 671 011f 03       		.byte	0x3
+ 672 0120 57       		.byte	0x57
+ 673 0121 77000000 		.4byte	0x77
+ 674 0125 0C       		.byte	0xc
+ 675 0126 09       		.uleb128 0x9
+ 676 0127 45000000 		.4byte	.LASF21
+ 677 012b 03       		.byte	0x3
+ 678 012c 58       		.byte	0x58
+ 679 012d 77000000 		.4byte	0x77
+ 680 0131 0E       		.byte	0xe
+ 681 0132 09       		.uleb128 0x9
+ 682 0133 8D000000 		.4byte	.LASF22
+ 683 0137 03       		.byte	0x3
+ 684 0138 59       		.byte	0x59
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 18
+
+
+ 685 0139 6B000000 		.4byte	0x6b
+ 686 013d 10       		.byte	0x10
+ 687 013e 09       		.uleb128 0x9
+ 688 013f CB010000 		.4byte	.LASF23
+ 689 0143 03       		.byte	0x3
+ 690 0144 5A       		.byte	0x5a
+ 691 0145 6B000000 		.4byte	0x6b
+ 692 0149 11       		.byte	0x11
+ 693 014a 00       		.byte	0
+ 694 014b 08       		.uleb128 0x8
+ 695 014c DB020000 		.4byte	.LASF24
+ 696 0150 03       		.byte	0x3
+ 697 0151 5B       		.byte	0x5b
+ 698 0152 CC000000 		.4byte	0xcc
+ 699 0156 0A       		.uleb128 0xa
+ 700 0157 22000000 		.4byte	.LASF48
+ 701 015b 03       		.byte	0x3
+ 702 015c 01       		.byte	0x1
+ 703 015d 52       		.byte	0x52
+ 704 015e 87010000 		.4byte	0x187
+ 705 0162 09       		.uleb128 0x9
+ 706 0163 30000000 		.4byte	.LASF25
+ 707 0167 01       		.byte	0x1
+ 708 0168 54       		.byte	0x54
+ 709 0169 6B000000 		.4byte	0x6b
+ 710 016d 00       		.byte	0
+ 711 016e 09       		.uleb128 0x9
+ 712 016f 95010000 		.4byte	.LASF26
+ 713 0173 01       		.byte	0x1
+ 714 0174 55       		.byte	0x55
+ 715 0175 6B000000 		.4byte	0x6b
+ 716 0179 01       		.byte	0x1
+ 717 017a 09       		.uleb128 0x9
+ 718 017b 6B000000 		.4byte	.LASF27
+ 719 017f 01       		.byte	0x1
+ 720 0180 56       		.byte	0x56
+ 721 0181 6B000000 		.4byte	0x6b
+ 722 0185 02       		.byte	0x2
+ 723 0186 00       		.byte	0
+ 724 0187 08       		.uleb128 0x8
+ 725 0188 97000000 		.4byte	.LASF28
+ 726 018c 01       		.byte	0x1
+ 727 018d 57       		.byte	0x57
+ 728 018e 56010000 		.4byte	0x156
+ 729 0192 0B       		.uleb128 0xb
+ 730 0193 D0020000 		.4byte	.LASF29
+ 731 0197 01       		.byte	0x1
+ 732 0198 6A       		.byte	0x6a
+ 733 0199 00000000 		.4byte	.LFB32
+ 734 019d 6C000000 		.4byte	.LFE32-.LFB32
+ 735 01a1 01       		.uleb128 0x1
+ 736 01a2 9C       		.byte	0x9c
+ 737 01a3 B4010000 		.4byte	0x1b4
+ 738 01a7 0C       		.uleb128 0xc
+ 739 01a8 6900     		.ascii	"i\000"
+ 740 01aa 01       		.byte	0x1
+ 741 01ab 6C       		.byte	0x6c
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 19
+
+
+ 742 01ac 6B000000 		.4byte	0x6b
+ 743 01b0 02       		.uleb128 0x2
+ 744 01b1 91       		.byte	0x91
+ 745 01b2 77       		.sleb128 -9
+ 746 01b3 00       		.byte	0
+ 747 01b4 0B       		.uleb128 0xb
+ 748 01b5 38030000 		.4byte	.LASF30
+ 749 01b9 01       		.byte	0x1
+ 750 01ba 83       		.byte	0x83
+ 751 01bb 00000000 		.4byte	.LFB33
+ 752 01bf BC000000 		.4byte	.LFE33-.LFB33
+ 753 01c3 01       		.uleb128 0x1
+ 754 01c4 9C       		.byte	0x9c
+ 755 01c5 02020000 		.4byte	0x202
+ 756 01c9 0D       		.uleb128 0xd
+ 757 01ca C1010000 		.4byte	.LASF31
+ 758 01ce 01       		.byte	0x1
+ 759 01cf 83       		.byte	0x83
+ 760 01d0 6B000000 		.4byte	0x6b
+ 761 01d4 02       		.uleb128 0x2
+ 762 01d5 91       		.byte	0x91
+ 763 01d6 6F       		.sleb128 -17
+ 764 01d7 0D       		.uleb128 0xd
+ 765 01d8 F2020000 		.4byte	.LASF32
+ 766 01dc 01       		.byte	0x1
+ 767 01dd 83       		.byte	0x83
+ 768 01de 02020000 		.4byte	0x202
+ 769 01e2 02       		.uleb128 0x2
+ 770 01e3 91       		.byte	0x91
+ 771 01e4 68       		.sleb128 -24
+ 772 01e5 0D       		.uleb128 0xd
+ 773 01e6 7C010000 		.4byte	.LASF33
+ 774 01ea 01       		.byte	0x1
+ 775 01eb 83       		.byte	0x83
+ 776 01ec A6000000 		.4byte	0xa6
+ 777 01f0 02       		.uleb128 0x2
+ 778 01f1 91       		.byte	0x91
+ 779 01f2 64       		.sleb128 -28
+ 780 01f3 0E       		.uleb128 0xe
+ 781 01f4 08020000 		.4byte	.LASF34
+ 782 01f8 01       		.byte	0x1
+ 783 01f9 85       		.byte	0x85
+ 784 01fa 6B000000 		.4byte	0x6b
+ 785 01fe 02       		.uleb128 0x2
+ 786 01ff 91       		.byte	0x91
+ 787 0200 77       		.sleb128 -9
+ 788 0201 00       		.byte	0
+ 789 0202 05       		.uleb128 0x5
+ 790 0203 04       		.byte	0x4
+ 791 0204 87010000 		.4byte	0x187
+ 792 0208 0F       		.uleb128 0xf
+ 793 0209 5D000000 		.4byte	.LASF35
+ 794 020d 01       		.byte	0x1
+ 795 020e BF       		.byte	0xbf
+ 796 020f 00000000 		.4byte	.LFB34
+ 797 0213 50000000 		.4byte	.LFE34-.LFB34
+ 798 0217 01       		.uleb128 0x1
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 20
+
+
+ 799 0218 9C       		.byte	0x9c
+ 800 0219 10       		.uleb128 0x10
+ 801 021a F7010000 		.4byte	.LASF36
+ 802 021e 01       		.byte	0x1
+ 803 021f D9       		.byte	0xd9
+ 804 0220 00000000 		.4byte	.LFB35
+ 805 0224 20000000 		.4byte	.LFE35-.LFB35
+ 806 0228 01       		.uleb128 0x1
+ 807 0229 9C       		.byte	0x9c
+ 808 022a 10       		.uleb128 0x10
+ 809 022b 7B000000 		.4byte	.LASF37
+ 810 022f 01       		.byte	0x1
+ 811 0230 EA       		.byte	0xea
+ 812 0231 00000000 		.4byte	.LFB36
+ 813 0235 14000000 		.4byte	.LFE36-.LFB36
+ 814 0239 01       		.uleb128 0x1
+ 815 023a 9C       		.byte	0x9c
+ 816 023b 11       		.uleb128 0x11
+ 817 023c 3D000000 		.4byte	.LASF38
+ 818 0240 01       		.byte	0x1
+ 819 0241 FB       		.byte	0xfb
+ 820 0242 00000000 		.4byte	.LFB37
+ 821 0246 B8000000 		.4byte	.LFE37-.LFB37
+ 822 024a 01       		.uleb128 0x1
+ 823 024b 9C       		.byte	0x9c
+ 824 024c 5F020000 		.4byte	0x25f
+ 825 0250 0E       		.uleb128 0xe
+ 826 0251 CA020000 		.4byte	.LASF39
+ 827 0255 01       		.byte	0x1
+ 828 0256 FD       		.byte	0xfd
+ 829 0257 6B000000 		.4byte	0x6b
+ 830 025b 02       		.uleb128 0x2
+ 831 025c 91       		.byte	0x91
+ 832 025d 77       		.sleb128 -9
+ 833 025e 00       		.byte	0
+ 834 025f 12       		.uleb128 0x12
+ 835 0260 87010000 		.4byte	0x187
+ 836 0264 6F020000 		.4byte	0x26f
+ 837 0268 13       		.uleb128 0x13
+ 838 0269 9F000000 		.4byte	0x9f
+ 839 026d 00       		.byte	0
+ 840 026e 00       		.byte	0
+ 841 026f 0E       		.uleb128 0xe
+ 842 0270 15020000 		.4byte	.LASF40
+ 843 0274 01       		.byte	0x1
+ 844 0275 59       		.byte	0x59
+ 845 0276 5F020000 		.4byte	0x25f
+ 846 027a 05       		.uleb128 0x5
+ 847 027b 03       		.byte	0x3
+ 848 027c 00000000 		.4byte	btnArray
+ 849 0280 12       		.uleb128 0x12
+ 850 0281 6B000000 		.4byte	0x6b
+ 851 0285 90020000 		.4byte	0x290
+ 852 0289 13       		.uleb128 0x13
+ 853 028a 9F000000 		.4byte	0x9f
+ 854 028e 1F       		.byte	0x1f
+ 855 028f 00       		.byte	0
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 21
+
+
+ 856 0290 0E       		.uleb128 0xe
+ 857 0291 16000000 		.4byte	.LASF41
+ 858 0295 01       		.byte	0x1
+ 859 0296 5B       		.byte	0x5b
+ 860 0297 80020000 		.4byte	0x280
+ 861 029b 05       		.uleb128 0x5
+ 862 029c 03       		.byte	0x3
+ 863 029d 04000000 		.4byte	bcpTxBuffer
+ 864 02a1 14       		.uleb128 0x14
+ 865 02a2 A9010000 		.4byte	.LASF42
+ 866 02a6 03       		.byte	0x3
+ 867 02a7 68       		.byte	0x68
+ 868 02a8 C1000000 		.4byte	0xc1
+ 869 02ac 14       		.uleb128 0x14
+ 870 02ad 0E000000 		.4byte	.LASF43
+ 871 02b1 03       		.byte	0x3
+ 872 02b2 69       		.byte	0x69
+ 873 02b3 4B010000 		.4byte	0x14b
+ 874 02b7 14       		.uleb128 0x14
+ 875 02b8 2F030000 		.4byte	.LASF44
+ 876 02bc 04       		.byte	0x4
+ 877 02bd 45       		.byte	0x45
+ 878 02be 6B000000 		.4byte	0x6b
+ 879 02c2 12       		.uleb128 0x12
+ 880 02c3 6B000000 		.4byte	0x6b
+ 881 02c7 D2020000 		.4byte	0x2d2
+ 882 02cb 13       		.uleb128 0x13
+ 883 02cc 9F000000 		.4byte	0x9f
+ 884 02d0 00       		.byte	0
+ 885 02d1 00       		.byte	0
+ 886 02d2 15       		.uleb128 0x15
+ 887 02d3 C1010000 		.4byte	.LASF31
+ 888 02d7 01       		.byte	0x1
+ 889 02d8 37       		.byte	0x37
+ 890 02d9 C2020000 		.4byte	0x2c2
+ 891 02dd 05       		.uleb128 0x5
+ 892 02de 03       		.byte	0x3
+ 893 02df 00000000 		.4byte	btnStatus
+ 894 02e3 00       		.byte	0
+ 895              		.section	.debug_abbrev,"",%progbits
+ 896              	.Ldebug_abbrev0:
+ 897 0000 01       		.uleb128 0x1
+ 898 0001 11       		.uleb128 0x11
+ 899 0002 01       		.byte	0x1
+ 900 0003 25       		.uleb128 0x25
+ 901 0004 0E       		.uleb128 0xe
+ 902 0005 13       		.uleb128 0x13
+ 903 0006 0B       		.uleb128 0xb
+ 904 0007 03       		.uleb128 0x3
+ 905 0008 0E       		.uleb128 0xe
+ 906 0009 1B       		.uleb128 0x1b
+ 907 000a 0E       		.uleb128 0xe
+ 908 000b 55       		.uleb128 0x55
+ 909 000c 17       		.uleb128 0x17
+ 910 000d 11       		.uleb128 0x11
+ 911 000e 01       		.uleb128 0x1
+ 912 000f 10       		.uleb128 0x10
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 22
+
+
+ 913 0010 17       		.uleb128 0x17
+ 914 0011 00       		.byte	0
+ 915 0012 00       		.byte	0
+ 916 0013 02       		.uleb128 0x2
+ 917 0014 24       		.uleb128 0x24
+ 918 0015 00       		.byte	0
+ 919 0016 0B       		.uleb128 0xb
+ 920 0017 0B       		.uleb128 0xb
+ 921 0018 3E       		.uleb128 0x3e
+ 922 0019 0B       		.uleb128 0xb
+ 923 001a 03       		.uleb128 0x3
+ 924 001b 0E       		.uleb128 0xe
+ 925 001c 00       		.byte	0
+ 926 001d 00       		.byte	0
+ 927 001e 03       		.uleb128 0x3
+ 928 001f 24       		.uleb128 0x24
+ 929 0020 00       		.byte	0
+ 930 0021 0B       		.uleb128 0xb
+ 931 0022 0B       		.uleb128 0xb
+ 932 0023 3E       		.uleb128 0x3e
+ 933 0024 0B       		.uleb128 0xb
+ 934 0025 03       		.uleb128 0x3
+ 935 0026 08       		.uleb128 0x8
+ 936 0027 00       		.byte	0
+ 937 0028 00       		.byte	0
+ 938 0029 04       		.uleb128 0x4
+ 939 002a 16       		.uleb128 0x16
+ 940 002b 00       		.byte	0
+ 941 002c 03       		.uleb128 0x3
+ 942 002d 0E       		.uleb128 0xe
+ 943 002e 3A       		.uleb128 0x3a
+ 944 002f 0B       		.uleb128 0xb
+ 945 0030 3B       		.uleb128 0x3b
+ 946 0031 05       		.uleb128 0x5
+ 947 0032 49       		.uleb128 0x49
+ 948 0033 13       		.uleb128 0x13
+ 949 0034 00       		.byte	0
+ 950 0035 00       		.byte	0
+ 951 0036 05       		.uleb128 0x5
+ 952 0037 0F       		.uleb128 0xf
+ 953 0038 00       		.byte	0
+ 954 0039 0B       		.uleb128 0xb
+ 955 003a 0B       		.uleb128 0xb
+ 956 003b 49       		.uleb128 0x49
+ 957 003c 13       		.uleb128 0x13
+ 958 003d 00       		.byte	0
+ 959 003e 00       		.byte	0
+ 960 003f 06       		.uleb128 0x6
+ 961 0040 13       		.uleb128 0x13
+ 962 0041 01       		.byte	0x1
+ 963 0042 0B       		.uleb128 0xb
+ 964 0043 0B       		.uleb128 0xb
+ 965 0044 3A       		.uleb128 0x3a
+ 966 0045 0B       		.uleb128 0xb
+ 967 0046 3B       		.uleb128 0x3b
+ 968 0047 0B       		.uleb128 0xb
+ 969 0048 01       		.uleb128 0x1
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 23
+
+
+ 970 0049 13       		.uleb128 0x13
+ 971 004a 00       		.byte	0
+ 972 004b 00       		.byte	0
+ 973 004c 07       		.uleb128 0x7
+ 974 004d 0D       		.uleb128 0xd
+ 975 004e 00       		.byte	0
+ 976 004f 03       		.uleb128 0x3
+ 977 0050 08       		.uleb128 0x8
+ 978 0051 3A       		.uleb128 0x3a
+ 979 0052 0B       		.uleb128 0xb
+ 980 0053 3B       		.uleb128 0x3b
+ 981 0054 0B       		.uleb128 0xb
+ 982 0055 49       		.uleb128 0x49
+ 983 0056 13       		.uleb128 0x13
+ 984 0057 38       		.uleb128 0x38
+ 985 0058 0B       		.uleb128 0xb
+ 986 0059 00       		.byte	0
+ 987 005a 00       		.byte	0
+ 988 005b 08       		.uleb128 0x8
+ 989 005c 16       		.uleb128 0x16
+ 990 005d 00       		.byte	0
+ 991 005e 03       		.uleb128 0x3
+ 992 005f 0E       		.uleb128 0xe
+ 993 0060 3A       		.uleb128 0x3a
+ 994 0061 0B       		.uleb128 0xb
+ 995 0062 3B       		.uleb128 0x3b
+ 996 0063 0B       		.uleb128 0xb
+ 997 0064 49       		.uleb128 0x49
+ 998 0065 13       		.uleb128 0x13
+ 999 0066 00       		.byte	0
+ 1000 0067 00       		.byte	0
+ 1001 0068 09       		.uleb128 0x9
+ 1002 0069 0D       		.uleb128 0xd
+ 1003 006a 00       		.byte	0
+ 1004 006b 03       		.uleb128 0x3
+ 1005 006c 0E       		.uleb128 0xe
+ 1006 006d 3A       		.uleb128 0x3a
+ 1007 006e 0B       		.uleb128 0xb
+ 1008 006f 3B       		.uleb128 0x3b
+ 1009 0070 0B       		.uleb128 0xb
+ 1010 0071 49       		.uleb128 0x49
+ 1011 0072 13       		.uleb128 0x13
+ 1012 0073 38       		.uleb128 0x38
+ 1013 0074 0B       		.uleb128 0xb
+ 1014 0075 00       		.byte	0
+ 1015 0076 00       		.byte	0
+ 1016 0077 0A       		.uleb128 0xa
+ 1017 0078 13       		.uleb128 0x13
+ 1018 0079 01       		.byte	0x1
+ 1019 007a 03       		.uleb128 0x3
+ 1020 007b 0E       		.uleb128 0xe
+ 1021 007c 0B       		.uleb128 0xb
+ 1022 007d 0B       		.uleb128 0xb
+ 1023 007e 3A       		.uleb128 0x3a
+ 1024 007f 0B       		.uleb128 0xb
+ 1025 0080 3B       		.uleb128 0x3b
+ 1026 0081 0B       		.uleb128 0xb
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 24
+
+
+ 1027 0082 01       		.uleb128 0x1
+ 1028 0083 13       		.uleb128 0x13
+ 1029 0084 00       		.byte	0
+ 1030 0085 00       		.byte	0
+ 1031 0086 0B       		.uleb128 0xb
+ 1032 0087 2E       		.uleb128 0x2e
+ 1033 0088 01       		.byte	0x1
+ 1034 0089 3F       		.uleb128 0x3f
+ 1035 008a 19       		.uleb128 0x19
+ 1036 008b 03       		.uleb128 0x3
+ 1037 008c 0E       		.uleb128 0xe
+ 1038 008d 3A       		.uleb128 0x3a
+ 1039 008e 0B       		.uleb128 0xb
+ 1040 008f 3B       		.uleb128 0x3b
+ 1041 0090 0B       		.uleb128 0xb
+ 1042 0091 27       		.uleb128 0x27
+ 1043 0092 19       		.uleb128 0x19
+ 1044 0093 11       		.uleb128 0x11
+ 1045 0094 01       		.uleb128 0x1
+ 1046 0095 12       		.uleb128 0x12
+ 1047 0096 06       		.uleb128 0x6
+ 1048 0097 40       		.uleb128 0x40
+ 1049 0098 18       		.uleb128 0x18
+ 1050 0099 9742     		.uleb128 0x2117
+ 1051 009b 19       		.uleb128 0x19
+ 1052 009c 01       		.uleb128 0x1
+ 1053 009d 13       		.uleb128 0x13
+ 1054 009e 00       		.byte	0
+ 1055 009f 00       		.byte	0
+ 1056 00a0 0C       		.uleb128 0xc
+ 1057 00a1 34       		.uleb128 0x34
+ 1058 00a2 00       		.byte	0
+ 1059 00a3 03       		.uleb128 0x3
+ 1060 00a4 08       		.uleb128 0x8
+ 1061 00a5 3A       		.uleb128 0x3a
+ 1062 00a6 0B       		.uleb128 0xb
+ 1063 00a7 3B       		.uleb128 0x3b
+ 1064 00a8 0B       		.uleb128 0xb
+ 1065 00a9 49       		.uleb128 0x49
+ 1066 00aa 13       		.uleb128 0x13
+ 1067 00ab 02       		.uleb128 0x2
+ 1068 00ac 18       		.uleb128 0x18
+ 1069 00ad 00       		.byte	0
+ 1070 00ae 00       		.byte	0
+ 1071 00af 0D       		.uleb128 0xd
+ 1072 00b0 05       		.uleb128 0x5
+ 1073 00b1 00       		.byte	0
+ 1074 00b2 03       		.uleb128 0x3
+ 1075 00b3 0E       		.uleb128 0xe
+ 1076 00b4 3A       		.uleb128 0x3a
+ 1077 00b5 0B       		.uleb128 0xb
+ 1078 00b6 3B       		.uleb128 0x3b
+ 1079 00b7 0B       		.uleb128 0xb
+ 1080 00b8 49       		.uleb128 0x49
+ 1081 00b9 13       		.uleb128 0x13
+ 1082 00ba 02       		.uleb128 0x2
+ 1083 00bb 18       		.uleb128 0x18
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 25
+
+
+ 1084 00bc 00       		.byte	0
+ 1085 00bd 00       		.byte	0
+ 1086 00be 0E       		.uleb128 0xe
+ 1087 00bf 34       		.uleb128 0x34
+ 1088 00c0 00       		.byte	0
+ 1089 00c1 03       		.uleb128 0x3
+ 1090 00c2 0E       		.uleb128 0xe
+ 1091 00c3 3A       		.uleb128 0x3a
+ 1092 00c4 0B       		.uleb128 0xb
+ 1093 00c5 3B       		.uleb128 0x3b
+ 1094 00c6 0B       		.uleb128 0xb
+ 1095 00c7 49       		.uleb128 0x49
+ 1096 00c8 13       		.uleb128 0x13
+ 1097 00c9 02       		.uleb128 0x2
+ 1098 00ca 18       		.uleb128 0x18
+ 1099 00cb 00       		.byte	0
+ 1100 00cc 00       		.byte	0
+ 1101 00cd 0F       		.uleb128 0xf
+ 1102 00ce 2E       		.uleb128 0x2e
+ 1103 00cf 00       		.byte	0
+ 1104 00d0 3F       		.uleb128 0x3f
+ 1105 00d1 19       		.uleb128 0x19
+ 1106 00d2 03       		.uleb128 0x3
+ 1107 00d3 0E       		.uleb128 0xe
+ 1108 00d4 3A       		.uleb128 0x3a
+ 1109 00d5 0B       		.uleb128 0xb
+ 1110 00d6 3B       		.uleb128 0x3b
+ 1111 00d7 0B       		.uleb128 0xb
+ 1112 00d8 27       		.uleb128 0x27
+ 1113 00d9 19       		.uleb128 0x19
+ 1114 00da 11       		.uleb128 0x11
+ 1115 00db 01       		.uleb128 0x1
+ 1116 00dc 12       		.uleb128 0x12
+ 1117 00dd 06       		.uleb128 0x6
+ 1118 00de 40       		.uleb128 0x40
+ 1119 00df 18       		.uleb128 0x18
+ 1120 00e0 9642     		.uleb128 0x2116
+ 1121 00e2 19       		.uleb128 0x19
+ 1122 00e3 00       		.byte	0
+ 1123 00e4 00       		.byte	0
+ 1124 00e5 10       		.uleb128 0x10
+ 1125 00e6 2E       		.uleb128 0x2e
+ 1126 00e7 00       		.byte	0
+ 1127 00e8 3F       		.uleb128 0x3f
+ 1128 00e9 19       		.uleb128 0x19
+ 1129 00ea 03       		.uleb128 0x3
+ 1130 00eb 0E       		.uleb128 0xe
+ 1131 00ec 3A       		.uleb128 0x3a
+ 1132 00ed 0B       		.uleb128 0xb
+ 1133 00ee 3B       		.uleb128 0x3b
+ 1134 00ef 0B       		.uleb128 0xb
+ 1135 00f0 27       		.uleb128 0x27
+ 1136 00f1 19       		.uleb128 0x19
+ 1137 00f2 11       		.uleb128 0x11
+ 1138 00f3 01       		.uleb128 0x1
+ 1139 00f4 12       		.uleb128 0x12
+ 1140 00f5 06       		.uleb128 0x6
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 26
+
+
+ 1141 00f6 40       		.uleb128 0x40
+ 1142 00f7 18       		.uleb128 0x18
+ 1143 00f8 9742     		.uleb128 0x2117
+ 1144 00fa 19       		.uleb128 0x19
+ 1145 00fb 00       		.byte	0
+ 1146 00fc 00       		.byte	0
+ 1147 00fd 11       		.uleb128 0x11
+ 1148 00fe 2E       		.uleb128 0x2e
+ 1149 00ff 01       		.byte	0x1
+ 1150 0100 3F       		.uleb128 0x3f
+ 1151 0101 19       		.uleb128 0x19
+ 1152 0102 03       		.uleb128 0x3
+ 1153 0103 0E       		.uleb128 0xe
+ 1154 0104 3A       		.uleb128 0x3a
+ 1155 0105 0B       		.uleb128 0xb
+ 1156 0106 3B       		.uleb128 0x3b
+ 1157 0107 0B       		.uleb128 0xb
+ 1158 0108 27       		.uleb128 0x27
+ 1159 0109 19       		.uleb128 0x19
+ 1160 010a 11       		.uleb128 0x11
+ 1161 010b 01       		.uleb128 0x1
+ 1162 010c 12       		.uleb128 0x12
+ 1163 010d 06       		.uleb128 0x6
+ 1164 010e 40       		.uleb128 0x40
+ 1165 010f 18       		.uleb128 0x18
+ 1166 0110 9642     		.uleb128 0x2116
+ 1167 0112 19       		.uleb128 0x19
+ 1168 0113 01       		.uleb128 0x1
+ 1169 0114 13       		.uleb128 0x13
+ 1170 0115 00       		.byte	0
+ 1171 0116 00       		.byte	0
+ 1172 0117 12       		.uleb128 0x12
+ 1173 0118 01       		.uleb128 0x1
+ 1174 0119 01       		.byte	0x1
+ 1175 011a 49       		.uleb128 0x49
+ 1176 011b 13       		.uleb128 0x13
+ 1177 011c 01       		.uleb128 0x1
+ 1178 011d 13       		.uleb128 0x13
+ 1179 011e 00       		.byte	0
+ 1180 011f 00       		.byte	0
+ 1181 0120 13       		.uleb128 0x13
+ 1182 0121 21       		.uleb128 0x21
+ 1183 0122 00       		.byte	0
+ 1184 0123 49       		.uleb128 0x49
+ 1185 0124 13       		.uleb128 0x13
+ 1186 0125 2F       		.uleb128 0x2f
+ 1187 0126 0B       		.uleb128 0xb
+ 1188 0127 00       		.byte	0
+ 1189 0128 00       		.byte	0
+ 1190 0129 14       		.uleb128 0x14
+ 1191 012a 34       		.uleb128 0x34
+ 1192 012b 00       		.byte	0
+ 1193 012c 03       		.uleb128 0x3
+ 1194 012d 0E       		.uleb128 0xe
+ 1195 012e 3A       		.uleb128 0x3a
+ 1196 012f 0B       		.uleb128 0xb
+ 1197 0130 3B       		.uleb128 0x3b
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 27
+
+
+ 1198 0131 0B       		.uleb128 0xb
+ 1199 0132 49       		.uleb128 0x49
+ 1200 0133 13       		.uleb128 0x13
+ 1201 0134 3F       		.uleb128 0x3f
+ 1202 0135 19       		.uleb128 0x19
+ 1203 0136 3C       		.uleb128 0x3c
+ 1204 0137 19       		.uleb128 0x19
+ 1205 0138 00       		.byte	0
+ 1206 0139 00       		.byte	0
+ 1207 013a 15       		.uleb128 0x15
+ 1208 013b 34       		.uleb128 0x34
+ 1209 013c 00       		.byte	0
+ 1210 013d 03       		.uleb128 0x3
+ 1211 013e 0E       		.uleb128 0xe
+ 1212 013f 3A       		.uleb128 0x3a
+ 1213 0140 0B       		.uleb128 0xb
+ 1214 0141 3B       		.uleb128 0x3b
+ 1215 0142 0B       		.uleb128 0xb
+ 1216 0143 49       		.uleb128 0x49
+ 1217 0144 13       		.uleb128 0x13
+ 1218 0145 3F       		.uleb128 0x3f
+ 1219 0146 19       		.uleb128 0x19
+ 1220 0147 02       		.uleb128 0x2
+ 1221 0148 18       		.uleb128 0x18
+ 1222 0149 00       		.byte	0
+ 1223 014a 00       		.byte	0
+ 1224 014b 00       		.byte	0
+ 1225              		.section	.debug_aranges,"",%progbits
+ 1226 0000 44000000 		.4byte	0x44
+ 1227 0004 0200     		.2byte	0x2
+ 1228 0006 00000000 		.4byte	.Ldebug_info0
+ 1229 000a 04       		.byte	0x4
+ 1230 000b 00       		.byte	0
+ 1231 000c 0000     		.2byte	0
+ 1232 000e 0000     		.2byte	0
+ 1233 0010 00000000 		.4byte	.LFB32
+ 1234 0014 6C000000 		.4byte	.LFE32-.LFB32
+ 1235 0018 00000000 		.4byte	.LFB33
+ 1236 001c BC000000 		.4byte	.LFE33-.LFB33
+ 1237 0020 00000000 		.4byte	.LFB34
+ 1238 0024 50000000 		.4byte	.LFE34-.LFB34
+ 1239 0028 00000000 		.4byte	.LFB35
+ 1240 002c 20000000 		.4byte	.LFE35-.LFB35
+ 1241 0030 00000000 		.4byte	.LFB36
+ 1242 0034 14000000 		.4byte	.LFE36-.LFB36
+ 1243 0038 00000000 		.4byte	.LFB37
+ 1244 003c B8000000 		.4byte	.LFE37-.LFB37
+ 1245 0040 00000000 		.4byte	0
+ 1246 0044 00000000 		.4byte	0
+ 1247              		.section	.debug_ranges,"",%progbits
+ 1248              	.Ldebug_ranges0:
+ 1249 0000 00000000 		.4byte	.LFB32
+ 1250 0004 6C000000 		.4byte	.LFE32
+ 1251 0008 00000000 		.4byte	.LFB33
+ 1252 000c BC000000 		.4byte	.LFE33
+ 1253 0010 00000000 		.4byte	.LFB34
+ 1254 0014 50000000 		.4byte	.LFE34
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 28
+
+
+ 1255 0018 00000000 		.4byte	.LFB35
+ 1256 001c 20000000 		.4byte	.LFE35
+ 1257 0020 00000000 		.4byte	.LFB36
+ 1258 0024 14000000 		.4byte	.LFE36
+ 1259 0028 00000000 		.4byte	.LFB37
+ 1260 002c B8000000 		.4byte	.LFE37
+ 1261 0030 00000000 		.4byte	0
+ 1262 0034 00000000 		.4byte	0
+ 1263              		.section	.debug_line,"",%progbits
+ 1264              	.Ldebug_line0:
+ 1265 0000 29010000 		.section	.debug_str,"MS",%progbits,1
+ 1265      02006800 
+ 1265      00000201 
+ 1265      FB0E0D00 
+ 1265      01010101 
+ 1266              	.LASF6:
+ 1267 0000 6C6F6E67 		.ascii	"long long int\000"
+ 1267      206C6F6E 
+ 1267      6720696E 
+ 1267      7400
+ 1268              	.LASF43:
+ 1269 000e 55495F44 		.ascii	"UI_Data\000"
+ 1269      61746100 
+ 1270              	.LASF41:
+ 1271 0016 62637054 		.ascii	"bcpTxBuffer\000"
+ 1271      78427566 
+ 1271      66657200 
+ 1272              	.LASF48:
+ 1273 0022 5F42746E 		.ascii	"_Btn_Status_T\000"
+ 1273      5F537461 
+ 1273      7475735F 
+ 1273      5400
+ 1274              	.LASF25:
+ 1275 0030 70726542 		.ascii	"preBtnStatus\000"
+ 1275      746E5374 
+ 1275      61747573 
+ 1275      00
+ 1276              	.LASF38:
+ 1277 003d 42435050 		.ascii	"BCPPoll\000"
+ 1277      6F6C6C00 
+ 1278              	.LASF21:
+ 1279 0045 6D696E53 		.ascii	"minSpeedRpm\000"
+ 1279      70656564 
+ 1279      52706D00 
+ 1280              	.LASF19:
+ 1281 0051 73706565 		.ascii	"speedRpmRef\000"
+ 1281      6452706D 
+ 1281      52656600 
+ 1282              	.LASF35:
+ 1283 005d 42757474 		.ascii	"ButtonProcess\000"
+ 1283      6F6E5072 
+ 1283      6F636573 
+ 1283      7300
+ 1284              	.LASF27:
+ 1285 006b 62746E49 		.ascii	"btnIsDetectFlag\000"
+ 1285      73446574 
+ 1285      65637446 
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 29
+
+
+ 1285      6C616700 
+ 1286              	.LASF37:
+ 1287 007b 55706461 		.ascii	"UpdateStatusError\000"
+ 1287      74655374 
+ 1287      61747573 
+ 1287      4572726F 
+ 1287      7200
+ 1288              	.LASF22:
+ 1289 008d 706F6C65 		.ascii	"polePairs\000"
+ 1289      50616972 
+ 1289      7300
+ 1290              	.LASF28:
+ 1291 0097 42746E5F 		.ascii	"Btn_Status_T\000"
+ 1291      53746174 
+ 1291      75735F54 
+ 1291      00
+ 1292              	.LASF11:
+ 1293 00a4 666C6F61 		.ascii	"float\000"
+ 1293      7400
+ 1294              	.LASF17:
+ 1295 00aa 67656172 		.ascii	"gearRatio\000"
+ 1295      52617469 
+ 1295      6F00
+ 1296              	.LASF1:
+ 1297 00b4 756E7369 		.ascii	"unsigned char\000"
+ 1297      676E6564 
+ 1297      20636861 
+ 1297      7200
+ 1298              	.LASF16:
+ 1299 00c2 55495F43 		.ascii	"UI_CMD\000"
+ 1299      4D4400
+ 1300              	.LASF5:
+ 1301 00c9 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1301      20756E73 
+ 1301      69676E65 
+ 1301      6420696E 
+ 1301      7400
+ 1302              	.LASF3:
+ 1303 00db 73686F72 		.ascii	"short unsigned int\000"
+ 1303      7420756E 
+ 1303      7369676E 
+ 1303      65642069 
+ 1303      6E7400
+ 1304              	.LASF45:
+ 1305 00ee 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1305      43313120 
+ 1305      352E342E 
+ 1305      31203230 
+ 1305      31363036 
+ 1306 0121 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m0 -mthumb -g -O"
+ 1306      20726576 
+ 1306      6973696F 
+ 1306      6E203233 
+ 1306      37373135 
+ 1307 0154 30202D66 		.ascii	"0 -ffunction-sections -ffat-lto-objects\000"
+ 1307      66756E63 
+ 1307      74696F6E 
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 30
+
+
+ 1307      2D736563 
+ 1307      74696F6E 
+ 1308              	.LASF33:
+ 1309 017c 62746E53 		.ascii	"btnStatusPtr\000"
+ 1309      74617475 
+ 1309      73507472 
+ 1309      00
+ 1310              	.LASF20:
+ 1311 0189 6D617853 		.ascii	"maxSpeedRpm\000"
+ 1311      70656564 
+ 1311      52706D00 
+ 1312              	.LASF26:
+ 1313 0195 676C6974 		.ascii	"glitchFilter\000"
+ 1313      63684669 
+ 1313      6C746572 
+ 1313      00
+ 1314              	.LASF12:
+ 1315 01a2 646F7562 		.ascii	"double\000"
+ 1315      6C6500
+ 1316              	.LASF42:
+ 1317 01a9 55495F43 		.ascii	"UI_Cmd\000"
+ 1317      6D6400
+ 1318              	.LASF2:
+ 1319 01b0 73686F72 		.ascii	"short int\000"
+ 1319      7420696E 
+ 1319      7400
+ 1320              	.LASF10:
+ 1321 01ba 75696E74 		.ascii	"uint16\000"
+ 1321      313600
+ 1322              	.LASF31:
+ 1323 01c1 62746E53 		.ascii	"btnStatus\000"
+ 1323      74617475 
+ 1323      7300
+ 1324              	.LASF23:
+ 1325 01cb 6D617843 		.ascii	"maxCurr\000"
+ 1325      75727200 
+ 1326              	.LASF8:
+ 1327 01d3 756E7369 		.ascii	"unsigned int\000"
+ 1327      676E6564 
+ 1327      20696E74 
+ 1327      00
+ 1328              	.LASF7:
+ 1329 01e0 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1329      206C6F6E 
+ 1329      6720756E 
+ 1329      7369676E 
+ 1329      65642069 
+ 1330              	.LASF36:
+ 1331 01f7 55706461 		.ascii	"UpdateStatusInit\000"
+ 1331      74655374 
+ 1331      61747573 
+ 1331      496E6974 
+ 1331      00
+ 1332              	.LASF34:
+ 1333 0208 63757242 		.ascii	"curBtnStatus\000"
+ 1333      746E5374 
+ 1333      61747573 
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 31
+
+
+ 1333      00
+ 1334              	.LASF40:
+ 1335 0215 62746E41 		.ascii	"btnArray\000"
+ 1335      72726179 
+ 1335      00
+ 1336              	.LASF15:
+ 1337 021e 73697A65 		.ascii	"sizetype\000"
+ 1337      74797065 
+ 1337      00
+ 1338              	.LASF47:
+ 1339 0227 433A5C55 		.ascii	"C:\\Users\\IlyR\\OneDrive - The University of Manch"
+ 1339      73657273 
+ 1339      5C496C79 
+ 1339      525C4F6E 
+ 1339      65447269 
+ 1340 0257 65737465 		.ascii	"ester\\EEE MTE SEM2\\3YP\\control\\speed_control_v1"
+ 1340      725C4545 
+ 1340      45204D54 
+ 1340      45205345 
+ 1340      4D325C33 
+ 1341 0286 5C53656E 		.ascii	"\\Sensored BLDC Motor Control\\Sensored BLDC Motor "
+ 1341      736F7265 
+ 1341      6420424C 
+ 1341      4443204D 
+ 1341      6F746F72 
+ 1342 02b7 436F6E74 		.ascii	"Control.cydsn\000"
+ 1342      726F6C2E 
+ 1342      63796473 
+ 1342      6E00
+ 1343              	.LASF13:
+ 1344 02c5 63686172 		.ascii	"char\000"
+ 1344      00
+ 1345              	.LASF39:
+ 1346 02ca 696E6465 		.ascii	"index\000"
+ 1346      7800
+ 1347              	.LASF29:
+ 1348 02d0 42757474 		.ascii	"ButtonInit\000"
+ 1348      6F6E496E 
+ 1348      697400
+ 1349              	.LASF24:
+ 1350 02db 55495F44 		.ascii	"UI_DATA\000"
+ 1350      41544100 
+ 1351              	.LASF18:
+ 1352 02e3 73706565 		.ascii	"speedRpm\000"
+ 1352      6452706D 
+ 1352      00
+ 1353              	.LASF9:
+ 1354 02ec 75696E74 		.ascii	"uint8\000"
+ 1354      3800
+ 1355              	.LASF32:
+ 1356 02f2 62746E41 		.ascii	"btnArrayPtr\000"
+ 1356      72726179 
+ 1356      50747200 
+ 1357              	.LASF4:
+ 1358 02fe 6C6F6E67 		.ascii	"long int\000"
+ 1358      20696E74 
+ 1358      00
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccdWaOeT.s 			page 32
+
+
+ 1359              	.LASF46:
+ 1360 0307 75736572 		.ascii	"userinterface.c\000"
+ 1360      696E7465 
+ 1360      72666163 
+ 1360      652E6300 
+ 1361              	.LASF14:
+ 1362 0317 6C6F6E67 		.ascii	"long double\000"
+ 1362      20646F75 
+ 1362      626C6500 
+ 1363              	.LASF0:
+ 1364 0323 7369676E 		.ascii	"signed char\000"
+ 1364      65642063 
+ 1364      68617200 
+ 1365              	.LASF44:
+ 1366 032f 73746174 		.ascii	"stateSys\000"
+ 1366      65537973 
+ 1366      00
+ 1367              	.LASF30:
+ 1368 0338 42757474 		.ascii	"ButtonPressDetect\000"
+ 1368      6F6E5072 
+ 1368      65737344 
+ 1368      65746563 
+ 1368      7400
+ 1369              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

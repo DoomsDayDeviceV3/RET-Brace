@@ -1,0 +1,2677 @@
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"motor.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	UI_Cmd,1,4
+  20              		.comm	UI_Data,48,8
+  21              		.global	gearRatio
+  22              		.bss
+  23              		.align	1
+  24              		.type	gearRatio, %object
+  25              		.size	gearRatio, 2
+  26              	gearRatio:
+  27 0000 0000     		.space	2
+  28              		.global	speedRef
+  29              		.align	1
+  30              		.type	speedRef, %object
+  31              		.size	speedRef, 2
+  32              	speedRef:
+  33 0002 0000     		.space	2
+  34              		.global	speedCur
+  35              		.align	1
+  36              		.type	speedCur, %object
+  37              		.size	speedCur, 2
+  38              	speedCur:
+  39 0004 0000     		.space	2
+  40              		.global	preSpeedCur
+  41              		.align	1
+  42              		.type	preSpeedCur, %object
+  43              		.size	preSpeedCur, 2
+  44              	preSpeedCur:
+  45 0006 0000     		.space	2
+  46              		.global	preCntCaptur
+  47              		.align	1
+  48              		.type	preCntCaptur, %object
+  49              		.size	preCntCaptur, 2
+  50              	preCntCaptur:
+  51 0008 0000     		.space	2
+  52              		.global	angularPos
+  53 000a 00000000 		.align	3
+  53      0000
+  54              		.type	angularPos, %object
+  55              		.size	angularPos, 8
+  56              	angularPos:
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 2
+
+
+  57 0010 00000000 		.space	8
+  57      00000000 
+  58              		.global	spinCount
+  59              		.align	1
+  60              		.type	spinCount, %object
+  61              		.size	spinCount, 2
+  62              	spinCount:
+  63 0018 0000     		.space	2
+  64              		.global	changeDirection
+  65              		.type	changeDirection, %object
+  66              		.size	changeDirection, 1
+  67              	changeDirection:
+  68 001a 00       		.space	1
+  69              		.global	programStateManchineState
+  70              		.type	programStateManchineState, %object
+  71              		.size	programStateManchineState, 1
+  72              	programStateManchineState:
+  73 001b 00       		.space	1
+  74              		.global	switchAngle
+  75              		.data
+  76              		.align	2
+  77              		.type	switchAngle, %object
+  78              		.size	switchAngle, 4
+  79              	switchAngle:
+  80 0000 00002041 		.word	1092616192
+  81              		.global	dutyCycle
+  82              		.bss
+  83              		.type	dutyCycle, %object
+  84              		.size	dutyCycle, 1
+  85              	dutyCycle:
+  86 001c 00       		.space	1
+  87              		.global	pwmCnt
+  88 001d 00       		.align	1
+  89              		.type	pwmCnt, %object
+  90              		.size	pwmCnt, 2
+  91              	pwmCnt:
+  92 001e 0000     		.space	2
+  93              		.global	firstRun
+  94              		.data
+  95              		.type	firstRun, %object
+  96              		.size	firstRun, 1
+  97              	firstRun:
+  98 0004 01       		.byte	1
+  99              		.global	ocBlankCnt
+ 100              		.bss
+ 101              		.type	ocBlankCnt, %object
+ 102              		.size	ocBlankCnt, 1
+ 103              	ocBlankCnt:
+ 104 0020 00       		.space	1
+ 105              		.global	errorState
+ 106              		.type	errorState, %object
+ 107              		.size	errorState, 1
+ 108              	errorState:
+ 109 0021 00       		.space	1
+ 110              		.global	stateSys
+ 111              		.data
+ 112              		.type	stateSys, %object
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 3
+
+
+ 113              		.size	stateSys, 1
+ 114              	stateSys:
+ 115 0005 02       		.byte	2
+ 116              		.section	.text.pwm_isr,"ax",%progbits
+ 117              		.align	2
+ 118              		.global	pwm_isr
+ 119              		.code	16
+ 120              		.thumb_func
+ 121              		.type	pwm_isr, %function
+ 122              	pwm_isr:
+ 123              	.LFB32:
+ 124              		.file 1 "motor.c"
+   1:motor.c       **** /*******************************************************************************
+   2:motor.c       **** * Project Name		: Sensored BLDC Motor Control
+   3:motor.c       **** * File Name			: motor.c
+   4:motor.c       **** * Version			: 1.0
+   5:motor.c       **** * Device Used		: CY8C4245AXI-483     
+   6:motor.c       **** * Software Used		: PSoC Creator 4.2
+   7:motor.c       **** * Compiler Used		: ARM GCC 5.4.1 
+   8:motor.c       **** * Related Hardware  : CY8CKIT-042 PSoC 4 Pioneer Kit + CY8CKIT-037 PSoC 4
+   9:motor.c       **** *                     Motor Control Evaluation Kit
+  10:motor.c       **** ******************************************************************************
+  11:motor.c       **** * Copyright (2018), Cypress Semiconductor Corporation. All rights reserved.
+  12:motor.c       **** *******************************************************************************
+  13:motor.c       **** * This software, including source code, documentation and related materials
+  14:motor.c       **** * (“Software”), is owned by Cypress Semiconductor Corporation or one of its
+  15:motor.c       **** * subsidiaries (“Cypress”) and is protected by and subject to worldwide patent
+  16:motor.c       **** * protection (United States and foreign), United States copyright laws and
+  17:motor.c       **** * international treaty provisions. Therefore, you may use this Software only
+  18:motor.c       **** * as provided in the license agreement accompanying the software package from
+  19:motor.c       **** * which you obtained this Software (“EULA”).
+  20:motor.c       **** *
+  21:motor.c       **** * If no EULA applies, Cypress hereby grants you a personal, nonexclusive,
+  22:motor.c       **** * non-transferable license to copy, modify, and compile the Software source
+  23:motor.c       **** * code solely for use in connection with Cypress’s integrated circuit products.
+  24:motor.c       **** * Any reproduction, modification, translation, compilation, or representation
+  25:motor.c       **** * of this Software except as specified above is prohibited without the express
+  26:motor.c       **** * written permission of Cypress.
+  27:motor.c       **** *
+  28:motor.c       **** * Disclaimer: THIS SOFTWARE IS PROVIDED AS-IS, WITH NO WARRANTY OF ANY KIND, 
+  29:motor.c       **** * EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, NONINFRINGEMENT, IMPLIED 
+  30:motor.c       **** * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. Cypress 
+  31:motor.c       **** * reserves the right to make changes to the Software without notice. Cypress 
+  32:motor.c       **** * does not assume any liability arising out of the application or use of the 
+  33:motor.c       **** * Software or any product or circuit described in the Software. Cypress does 
+  34:motor.c       **** * not authorize its products for use in any products where a malfunction or 
+  35:motor.c       **** * failure of the Cypress product may reasonably be expected to result in 
+  36:motor.c       **** * significant property damage, injury or death (“High Risk Product”). By 
+  37:motor.c       **** * including Cypress’s product in a High Risk Product, the manufacturer of such 
+  38:motor.c       **** * system or application assumes all risk of such use and in doing so agrees to 
+  39:motor.c       **** * indemnify Cypress against all liability.
+  40:motor.c       **** *******************************************************************************/
+  41:motor.c       **** #include <project.h>
+  42:motor.c       **** #include "motor.h"
+  43:motor.c       **** #include "userinterface.h"
+  44:motor.c       **** #include "getvalue.h"
+  45:motor.c       **** 
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 4
+
+
+  46:motor.c       **** /* UI_MOTOR_STATUS Status */
+  47:motor.c       **** UI_CMD  UI_Cmd;
+  48:motor.c       **** UI_DATA UI_Data;
+  49:motor.c       **** 
+  50:motor.c       **** uint16 gearRatio = 0;         /* :1 gearRatio */
+  51:motor.c       **** uint16 speedRef = 0;            /* Motor speed Reference */
+  52:motor.c       **** uint16 speedCur = 0;         /* Current motor speed. Original: 3000 */
+  53:motor.c       **** 
+  54:motor.c       **** uint16 preSpeedCur = 0;
+  55:motor.c       **** uint16 preCntCaptur = 0;         /* Current motor speed. Original: 30000 */
+  56:motor.c       **** 
+  57:motor.c       **** float64 angularPos = 0;
+  58:motor.c       **** int16 spinCount = 0;
+  59:motor.c       **** uint8 changeDirection = FALSE;
+  60:motor.c       **** uint8 programStateManchineState = 0;
+  61:motor.c       **** float32 switchAngle = 10.0;
+  62:motor.c       **** 
+  63:motor.c       **** uint8  dutyCycle = 0;            /* really now used as BYTE since use 8-bit PWM */
+  64:motor.c       **** uint16 pwmCnt = 0;
+  65:motor.c       **** uint8 firstRun = 1;
+  66:motor.c       **** uint8 ocBlankCnt = 0;
+  67:motor.c       **** Error_T errorState = no_error;
+  68:motor.c       **** uint8 stateSys = STATUS_STOP;
+  69:motor.c       **** 
+  70:motor.c       **** /*******************************************************************************
+  71:motor.c       **** * Function Name: pwm_isr
+  72:motor.c       **** ********************************************************************************
+  73:motor.c       **** *
+  74:motor.c       **** * Summary:
+  75:motor.c       **** * This function is PWM ISR. When TC happens, it increases PWM ticker, clears flag and 
+  76:motor.c       **** * enables over current protection ISR after startup.
+  77:motor.c       **** *
+  78:motor.c       **** * Parameters: None
+  79:motor.c       **** *
+  80:motor.c       **** * Return: None
+  81:motor.c       **** *
+  82:motor.c       **** *******************************************************************************/
+  83:motor.c       **** CY_ISR(pwm_isr)
+  84:motor.c       **** {	
+ 125              		.loc 1 84 0
+ 126              		.cfi_startproc
+ 127              		@ args = 0, pretend = 0, frame = 0
+ 128              		@ frame_needed = 1, uses_anonymous_args = 0
+ 129 0000 80B5     		push	{r7, lr}
+ 130              		.cfi_def_cfa_offset 8
+ 131              		.cfi_offset 7, -8
+ 132              		.cfi_offset 14, -4
+ 133 0002 00AF     		add	r7, sp, #0
+ 134              		.cfi_def_cfa_register 7
+  85:motor.c       **** 	pwmCnt++;  
+ 135              		.loc 1 85 0
+ 136 0004 184B     		ldr	r3, .L5
+ 137 0006 1B88     		ldrh	r3, [r3]
+ 138 0008 0133     		adds	r3, r3, #1
+ 139 000a 9AB2     		uxth	r2, r3
+ 140 000c 164B     		ldr	r3, .L5
+ 141 000e 1A80     		strh	r2, [r3]
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 5
+
+
+  86:motor.c       **** 	
+  87:motor.c       ****     /* Avoid the current pulse interference in motor start-up*/
+  88:motor.c       ****     if (UI_Cmd.run)
+ 142              		.loc 1 88 0
+ 143 0010 164B     		ldr	r3, .L5+4
+ 144 0012 1B78     		ldrb	r3, [r3]
+ 145 0014 002B     		cmp	r3, #0
+ 146 0016 17D0     		beq	.L2
+  89:motor.c       ****     {
+  90:motor.c       ****         if(firstRun == 1)
+ 147              		.loc 1 90 0
+ 148 0018 154B     		ldr	r3, .L5+8
+ 149 001a 1B78     		ldrb	r3, [r3]
+ 150 001c 012B     		cmp	r3, #1
+ 151 001e 05D1     		bne	.L3
+  91:motor.c       ****         {
+  92:motor.c       ****             ocBlankCnt++;
+ 152              		.loc 1 92 0
+ 153 0020 144B     		ldr	r3, .L5+12
+ 154 0022 1B78     		ldrb	r3, [r3]
+ 155 0024 0133     		adds	r3, r3, #1
+ 156 0026 DAB2     		uxtb	r2, r3
+ 157 0028 124B     		ldr	r3, .L5+12
+ 158 002a 1A70     		strb	r2, [r3]
+ 159              	.L3:
+  93:motor.c       ****         }
+  94:motor.c       ****         if (ocBlankCnt > 2)    /*Ignore the first 2 PWM period = 50uS*3=150uS, then enable over cur
+ 160              		.loc 1 94 0
+ 161 002c 114B     		ldr	r3, .L5+12
+ 162 002e 1B78     		ldrb	r3, [r3]
+ 163 0030 022B     		cmp	r3, #2
+ 164 0032 09D9     		bls	.L2
+  95:motor.c       ****         {
+  96:motor.c       ****             firstRun = 0;
+ 165              		.loc 1 96 0
+ 166 0034 0E4B     		ldr	r3, .L5+8
+ 167 0036 0022     		movs	r2, #0
+ 168 0038 1A70     		strb	r2, [r3]
+  97:motor.c       ****             ocBlankCnt = 0;
+ 169              		.loc 1 97 0
+ 170 003a 0E4B     		ldr	r3, .L5+12
+ 171 003c 0022     		movs	r2, #0
+ 172 003e 1A70     		strb	r2, [r3]
+  98:motor.c       ****             isr_oc_Enable();
+ 173              		.loc 1 98 0
+ 174 0040 FFF7FEFF 		bl	isr_oc_Enable
+  99:motor.c       ****             isr_oc_ClearPending();
+ 175              		.loc 1 99 0
+ 176 0044 FFF7FEFF 		bl	isr_oc_ClearPending
+ 177              	.L2:
+ 100:motor.c       ****         }
+ 101:motor.c       ****     }
+ 102:motor.c       **** 	
+ 103:motor.c       **** 	/* Calculate the real time motor speed every 2000 PWM period*/
+ 104:motor.c       **** 	if(pwmCnt >= 2001)
+ 178              		.loc 1 104 0
+ 179 0048 074B     		ldr	r3, .L5
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 6
+
+
+ 180 004a 1A88     		ldrh	r2, [r3]
+ 181 004c FA23     		movs	r3, #250
+ 182 004e DB00     		lsls	r3, r3, #3
+ 183 0050 9A42     		cmp	r2, r3
+ 184 0052 02D9     		bls	.L4
+ 105:motor.c       **** 	{
+ 106:motor.c       **** 		pwmCnt = 0;
+ 185              		.loc 1 106 0
+ 186 0054 044B     		ldr	r3, .L5
+ 187 0056 0022     		movs	r2, #0
+ 188 0058 1A80     		strh	r2, [r3]
+ 189              	.L4:
+ 107:motor.c       **** 	}
+ 108:motor.c       **** 
+ 109:motor.c       **** 	PWM_Drive_ClearInterrupt(PWM_Drive_INTR_MASK_TC);
+ 190              		.loc 1 109 0
+ 191 005a 0120     		movs	r0, #1
+ 192 005c FFF7FEFF 		bl	PWM_Drive_ClearInterrupt
+ 110:motor.c       **** }
+ 193              		.loc 1 110 0
+ 194 0060 C046     		nop
+ 195 0062 BD46     		mov	sp, r7
+ 196              		@ sp needed
+ 197 0064 80BD     		pop	{r7, pc}
+ 198              	.L6:
+ 199 0066 C046     		.align	2
+ 200              	.L5:
+ 201 0068 00000000 		.word	pwmCnt
+ 202 006c 00000000 		.word	UI_Cmd
+ 203 0070 00000000 		.word	firstRun
+ 204 0074 00000000 		.word	ocBlankCnt
+ 205              		.cfi_endproc
+ 206              	.LFE32:
+ 207              		.size	pwm_isr, .-pwm_isr
+ 208              		.section	.text.drive_reset,"ax",%progbits
+ 209              		.align	2
+ 210              		.global	drive_reset
+ 211              		.code	16
+ 212              		.thumb_func
+ 213              		.type	drive_reset, %function
+ 214              	drive_reset:
+ 215              	.LFB33:
+ 111:motor.c       **** 
+ 112:motor.c       **** /*******************************************************************************
+ 113:motor.c       **** * Function Name: drive_reset
+ 114:motor.c       **** ********************************************************************************
+ 115:motor.c       **** *
+ 116:motor.c       **** * Summary:
+ 117:motor.c       **** * custom to allow direction change
+ 118:motor.c       **** * 
+ 119:motor.c       **** * Parameters: None
+ 120:motor.c       **** *
+ 121:motor.c       **** * Return: None
+ 122:motor.c       **** *
+ 123:motor.c       **** *******************************************************************************/
+ 124:motor.c       **** void drive_reset() {
+ 216              		.loc 1 124 0
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 7
+
+
+ 217              		.cfi_startproc
+ 218              		@ args = 0, pretend = 0, frame = 0
+ 219              		@ frame_needed = 1, uses_anonymous_args = 0
+ 220 0000 80B5     		push	{r7, lr}
+ 221              		.cfi_def_cfa_offset 8
+ 222              		.cfi_offset 7, -8
+ 223              		.cfi_offset 14, -4
+ 224 0002 00AF     		add	r7, sp, #0
+ 225              		.cfi_def_cfa_register 7
+ 125:motor.c       ****     
+ 126:motor.c       ****     speedCur = 0;         /* Current motor speed. Original: 3000 */
+ 226              		.loc 1 126 0
+ 227 0004 104B     		ldr	r3, .L8
+ 228 0006 0022     		movs	r2, #0
+ 229 0008 1A80     		strh	r2, [r3]
+ 127:motor.c       ****     preSpeedCur = 0;
+ 230              		.loc 1 127 0
+ 231 000a 104B     		ldr	r3, .L8+4
+ 232 000c 0022     		movs	r2, #0
+ 233 000e 1A80     		strh	r2, [r3]
+ 128:motor.c       ****     preCntCaptur = 0; /* Original:30000*/
+ 234              		.loc 1 128 0
+ 235 0010 0F4B     		ldr	r3, .L8+8
+ 236 0012 0022     		movs	r2, #0
+ 237 0014 1A80     		strh	r2, [r3]
+ 129:motor.c       ****     UI_Data.timeBetweenHallSamples = 0;
+ 238              		.loc 1 129 0
+ 239 0016 0F4B     		ldr	r3, .L8+12
+ 240 0018 0022     		movs	r2, #0
+ 241 001a DA82     		strh	r2, [r3, #22]
+ 130:motor.c       ****     
+ 131:motor.c       ****     isr_oc_Stop();
+ 242              		.loc 1 131 0
+ 243 001c FFF7FEFF 		bl	isr_oc_Stop
+ 132:motor.c       ****     UI_Data.motorWindupOvercurrentDisable = 1;
+ 244              		.loc 1 132 0
+ 245 0020 0C4B     		ldr	r3, .L8+12
+ 246 0022 0122     		movs	r2, #1
+ 247 0024 1A85     		strh	r2, [r3, #40]
+ 133:motor.c       ****     firstRun = 1;
+ 248              		.loc 1 133 0
+ 249 0026 0C4B     		ldr	r3, .L8+16
+ 250 0028 0122     		movs	r2, #1
+ 251 002a 1A70     		strb	r2, [r3]
+ 134:motor.c       ****     ocBlankCnt = 0;
+ 252              		.loc 1 134 0
+ 253 002c 0B4B     		ldr	r3, .L8+20
+ 254 002e 0022     		movs	r2, #0
+ 255 0030 1A70     		strb	r2, [r3]
+ 135:motor.c       ****     dutyCycle = 0;
+ 256              		.loc 1 135 0
+ 257 0032 0B4B     		ldr	r3, .L8+24
+ 258 0034 0022     		movs	r2, #0
+ 259 0036 1A70     		strb	r2, [r3]
+ 136:motor.c       ****     PWM_Drive_WriteCompare(dutyCycle);
+ 260              		.loc 1 136 0
+ 261 0038 094B     		ldr	r3, .L8+24
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 8
+
+
+ 262 003a 1B78     		ldrb	r3, [r3]
+ 263 003c 1800     		movs	r0, r3
+ 264 003e FFF7FEFF 		bl	PWM_Drive_WriteCompare
+ 137:motor.c       **** }
+ 265              		.loc 1 137 0
+ 266 0042 C046     		nop
+ 267 0044 BD46     		mov	sp, r7
+ 268              		@ sp needed
+ 269 0046 80BD     		pop	{r7, pc}
+ 270              	.L9:
+ 271              		.align	2
+ 272              	.L8:
+ 273 0048 00000000 		.word	speedCur
+ 274 004c 00000000 		.word	preSpeedCur
+ 275 0050 00000000 		.word	preCntCaptur
+ 276 0054 00000000 		.word	UI_Data
+ 277 0058 00000000 		.word	firstRun
+ 278 005c 00000000 		.word	ocBlankCnt
+ 279 0060 00000000 		.word	dutyCycle
+ 280              		.cfi_endproc
+ 281              	.LFE33:
+ 282              		.size	drive_reset, .-drive_reset
+ 283              		.section	.text.time_isr,"ax",%progbits
+ 284              		.align	2
+ 285              		.global	time_isr
+ 286              		.code	16
+ 287              		.thumb_func
+ 288              		.type	time_isr, %function
+ 289              	time_isr:
+ 290              	.LFB34:
+ 138:motor.c       **** 
+ 139:motor.c       **** /*******************************************************************************
+ 140:motor.c       **** * Function Name: time_isr
+ 141:motor.c       **** ********************************************************************************
+ 142:motor.c       **** *
+ 143:motor.c       **** * Summary:
+ 144:motor.c       **** * custom to allow accurate speed sensing
+ 145:motor.c       **** * 
+ 146:motor.c       **** * Parameters: None
+ 147:motor.c       **** *
+ 148:motor.c       **** * Return: None
+ 149:motor.c       **** *
+ 150:motor.c       **** *******************************************************************************/
+ 151:motor.c       **** CY_ISR(time_isr) {
+ 291              		.loc 1 151 0
+ 292              		.cfi_startproc
+ 293              		@ args = 0, pretend = 0, frame = 0
+ 294              		@ frame_needed = 1, uses_anonymous_args = 0
+ 295 0000 80B5     		push	{r7, lr}
+ 296              		.cfi_def_cfa_offset 8
+ 297              		.cfi_offset 7, -8
+ 298              		.cfi_offset 14, -4
+ 299 0002 00AF     		add	r7, sp, #0
+ 300              		.cfi_def_cfa_register 7
+ 152:motor.c       ****     UI_Data.timeBetweenHallSamples = UI_Data.timeBetweenHallSamples + 1;
+ 301              		.loc 1 152 0
+ 302 0004 054B     		ldr	r3, .L11
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 9
+
+
+ 303 0006 DB8A     		ldrh	r3, [r3, #22]
+ 304 0008 0133     		adds	r3, r3, #1
+ 305 000a 9AB2     		uxth	r2, r3
+ 306 000c 034B     		ldr	r3, .L11
+ 307 000e DA82     		strh	r2, [r3, #22]
+ 153:motor.c       ****     
+ 154:motor.c       ****     Timer_1_STATUS;
+ 308              		.loc 1 154 0
+ 309 0010 034B     		ldr	r3, .L11+4
+ 310 0012 1B78     		ldrb	r3, [r3]
+ 155:motor.c       **** }
+ 311              		.loc 1 155 0
+ 312 0014 C046     		nop
+ 313 0016 BD46     		mov	sp, r7
+ 314              		@ sp needed
+ 315 0018 80BD     		pop	{r7, pc}
+ 316              	.L12:
+ 317 001a C046     		.align	2
+ 318              	.L11:
+ 319 001c 00000000 		.word	UI_Data
+ 320 0020 63000F40 		.word	1074724963
+ 321              		.cfi_endproc
+ 322              	.LFE34:
+ 323              		.size	time_isr, .-time_isr
+ 324              		.global	__aeabi_ui2f
+ 325              		.global	__aeabi_fmul
+ 326              		.global	__aeabi_fdiv
+ 327              		.global	__aeabi_f2uiz
+ 328              		.global	__aeabi_i2f
+ 329              		.global	__aeabi_f2d
+ 330              		.global	__aeabi_dadd
+ 331              		.global	__aeabi_dsub
+ 332              		.global	__aeabi_dcmpge
+ 333              		.global	__aeabi_dcmple
+ 334              		.section	.text.speed_measure_isr,"ax",%progbits
+ 335              		.align	2
+ 336              		.global	speed_measure_isr
+ 337              		.code	16
+ 338              		.thumb_func
+ 339              		.type	speed_measure_isr, %function
+ 340              	speed_measure_isr:
+ 341              	.LFB35:
+ 156:motor.c       **** 
+ 157:motor.c       **** /*******************************************************************************
+ 158:motor.c       **** * Function Name: speed_measure_isr
+ 159:motor.c       **** ********************************************************************************
+ 160:motor.c       **** *
+ 161:motor.c       **** * Summary:
+ 162:motor.c       **** * This function is ISR for motor speed and position measurement. 
+ 163:motor.c       **** * 
+ 164:motor.c       **** * Parameters: None
+ 165:motor.c       **** *
+ 166:motor.c       **** * Return: None
+ 167:motor.c       **** *
+ 168:motor.c       **** *******************************************************************************/
+ 169:motor.c       **** CY_ISR(speed_measure_isr)
+ 170:motor.c       **** {
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 10
+
+
+ 342              		.loc 1 170 0
+ 343              		.cfi_startproc
+ 344              		@ args = 0, pretend = 0, frame = 24
+ 345              		@ frame_needed = 1, uses_anonymous_args = 0
+ 346 0000 B0B5     		push	{r4, r5, r7, lr}
+ 347              		.cfi_def_cfa_offset 16
+ 348              		.cfi_offset 4, -16
+ 349              		.cfi_offset 5, -12
+ 350              		.cfi_offset 7, -8
+ 351              		.cfi_offset 14, -4
+ 352 0002 86B0     		sub	sp, sp, #24
+ 353              		.cfi_def_cfa_offset 40
+ 354 0004 00AF     		add	r7, sp, #0
+ 355              		.cfi_def_cfa_register 7
+ 171:motor.c       ****     #if 0
+ 172:motor.c       ****     uint16 cntCaptur = 0;
+ 173:motor.c       ****     uint16 timeConst = 5405; // 4730 for 20-5 RPM, 5405 for 2 RPM 
+ 174:motor.c       ****     
+ 175:motor.c       ****     cntCaptur = Counter_Spd_ReadCapture();
+ 176:motor.c       **** 	
+ 177:motor.c       **** 	speedCur = preCntCaptur - cntCaptur;
+ 178:motor.c       **** 	
+ 179:motor.c       ****     /* filter for speed measured */
+ 180:motor.c       **** //    speedCur = (uint16) ((float32)(3 * preSpeedCur + speedCur) / 4);
+ 181:motor.c       ****     speedCur = (preSpeedCur >> 2) + (preSpeedCur >> 1) + (speedCur >> 2);
+ 182:motor.c       ****     
+ 183:motor.c       ****     /* calculate hall effect sensor ticks for position sensing */
+ 184:motor.c       **** //    if (UI_Data.Dir == CLOCK_WISE) {
+ 185:motor.c       **** //        hallCount += speedCur;
+ 186:motor.c       **** //    } else if (UI_Data.Dir == COUNTER_CLOCK_WISE) {
+ 187:motor.c       **** //        hallCount -= speedCur;
+ 188:motor.c       **** //    }
+ 189:motor.c       **** 
+ 190:motor.c       ****     /* Each electrical revolution = 6 Hall transitions (for 3 Hall sensors in a BLDC motor) */
+ 191:motor.c       **** 	/* Each mechanical revolution = 4 electrical revolutions (since there are 4 pole pairs) */
+ 192:motor.c       ****     /* Each motor degree of rotation/position = 1/360 mechanical revolutions */
+ 193:motor.c       ****     /* Each gearbox output rotation/position = gear ratio motor degree of rotation/position */
+ 194:motor.c       ****     /*  360.0 / (6.0 * 4.0) = 15*/
+ 195:motor.c       ****     if (UI_Data.Dir == CLOCK_WISE) {
+ 196:motor.c       ****         UI_Data.angularPos += ((float) cntCaptur) * 360.0 / (6.0 * 4.0) / ((float) UI_Data.gearRati
+ 197:motor.c       ****     } else if (UI_Data.Dir == COUNTER_CLOCK_WISE) {
+ 198:motor.c       ****         UI_Data.angularPos -= ((float) cntCaptur) * 360.0 / (6.0 * 4.0) / ((float) UI_Data.gearRati
+ 199:motor.c       ****     }
+ 200:motor.c       **** //    float32 temp3 = ((float) UI_Data.timeBetweenHallSamples) * 0.001f;
+ 201:motor.c       **** //    if (UI_Data.timeBetweenHallSamples <= 100) {
+ 202:motor.c       **** //        if (UI_Data.Dir == CLOCK_WISE) {
+ 203:motor.c       **** //            UI_Data.angularPos += ((float)speedCur) / 60.0 * temp3 * 15.0 / ((float) UI_Data.gear
+ 204:motor.c       **** //        } else if (UI_Data.Dir == COUNTER_CLOCK_WISE) {
+ 205:motor.c       **** //            UI_Data.angularPos -= ((float)speedCur) /60.0 * temp3 * 15.0 / ((float) UI_Data.gearR
+ 206:motor.c       **** //        }
+ 207:motor.c       **** //    }
+ 208:motor.c       ****     
+ 209:motor.c       ****     
+ 210:motor.c       ****     if (UI_Data.angularPos >= 360.0) { // clockwise
+ 211:motor.c       ****         while (UI_Data.angularPos >= 360.0) {
+ 212:motor.c       ****             UI_Data.angularPos -= 360.0;
+ 213:motor.c       ****             UI_Data.spinCount++;
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 11
+
+
+ 214:motor.c       ****         }
+ 215:motor.c       ****     } else if (UI_Data.angularPos <= -360.0) { //anticlockwise
+ 216:motor.c       ****         while (UI_Data.angularPos <= -360.0) {
+ 217:motor.c       ****             UI_Data.angularPos += 360.0;
+ 218:motor.c       ****             UI_Data.spinCount--;
+ 219:motor.c       ****         }
+ 220:motor.c       ****     }
+ 221:motor.c       **** 
+ 222:motor.c       ****     preCntCaptur = cntCaptur;
+ 223:motor.c       **** 	preSpeedCur = speedCur; 
+ 224:motor.c       ****     UI_Data.timeBetweenHallSamples = 0;
+ 225:motor.c       **** 	
+ 226:motor.c       **** 	Counter_Spd_ClearInterrupt(Counter_Spd_INTR_MASK_CC_MATCH);
+ 227:motor.c       ****     
+ 228:motor.c       ****     #else
+ 229:motor.c       ****     
+ 230:motor.c       ****     uint16 cntCaptur = Counter_Spd_ReadCapture();
+ 356              		.loc 1 230 0
+ 357 0006 FFF7FEFF 		bl	Counter_Spd_ReadCapture
+ 358 000a 0200     		movs	r2, r0
+ 359 000c 1623     		movs	r3, #22
+ 360 000e FB18     		adds	r3, r7, r3
+ 361 0010 1A80     		strh	r2, [r3]
+ 231:motor.c       ****     static uint16 preCntCaptur = 0;
+ 232:motor.c       ****     static float preSpeedCur = 0;
+ 233:motor.c       ****     
+ 234:motor.c       ****     // Compute the time difference (handle overflow)
+ 235:motor.c       ****     speedCur = preCntCaptur - cntCaptur;
+ 362              		.loc 1 235 0
+ 363 0012 674B     		ldr	r3, .L23
+ 364 0014 1A88     		ldrh	r2, [r3]
+ 365 0016 1623     		movs	r3, #22
+ 366 0018 FB18     		adds	r3, r7, r3
+ 367 001a 1B88     		ldrh	r3, [r3]
+ 368 001c D31A     		subs	r3, r2, r3
+ 369 001e 9AB2     		uxth	r2, r3
+ 370 0020 644B     		ldr	r3, .L23+4
+ 371 0022 1A80     		strh	r2, [r3]
+ 236:motor.c       **** //    if (speedCur < 0) {
+ 237:motor.c       **** //        speedCur += 65535; // Timer overflow handling
+ 238:motor.c       **** //    }
+ 239:motor.c       **** 
+ 240:motor.c       ****     // Apply filtering (EMA)
+ 241:motor.c       **** //    speedCur = (0.25f * preSpeedCur) + (0.75f * speedCur);
+ 242:motor.c       ****     
+ 243:motor.c       ****     // Convert to RPM (assuming 200 kHz clock) , 4 Hall pulses per rev as only one hall sensor is u
+ 244:motor.c       ****     // Assuming 100 kHz clock
+ 245:motor.c       ****     // Assuming 4 Hall pulses per Revolution (only one hall sensor used, 4 Pole Pairs)
+ 246:motor.c       ****     float speedRpmFloat = (60.0f * 100000.0f) / ((float)speedCur * 4.0f);
+ 372              		.loc 1 246 0
+ 373 0024 634B     		ldr	r3, .L23+4
+ 374 0026 1B88     		ldrh	r3, [r3]
+ 375 0028 1800     		movs	r0, r3
+ 376 002a FFF7FEFF 		bl	__aeabi_ui2f
+ 377 002e 031C     		adds	r3, r0, #0
+ 378 0030 8121     		movs	r1, #129
+ 379 0032 C905     		lsls	r1, r1, #23
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 12
+
+
+ 380 0034 181C     		adds	r0, r3, #0
+ 381 0036 FFF7FEFF 		bl	__aeabi_fmul
+ 382 003a 031C     		adds	r3, r0, #0
+ 383 003c 191C     		adds	r1, r3, #0
+ 384 003e 5E48     		ldr	r0, .L23+8
+ 385 0040 FFF7FEFF 		bl	__aeabi_fdiv
+ 386 0044 031C     		adds	r3, r0, #0
+ 387 0046 3B61     		str	r3, [r7, #16]
+ 247:motor.c       ****     UI_Data.speedRpm = speedRpmFloat;
+ 388              		.loc 1 247 0
+ 389 0048 3869     		ldr	r0, [r7, #16]
+ 390 004a FFF7FEFF 		bl	__aeabi_f2uiz
+ 391 004e 0300     		movs	r3, r0
+ 392 0050 9AB2     		uxth	r2, r3
+ 393 0052 5A4B     		ldr	r3, .L23+12
+ 394 0054 1A81     		strh	r2, [r3, #8]
+ 248:motor.c       ****     
+ 249:motor.c       ****     // Compute delta angle (degrees)
+ 250:motor.c       ****     float dt = UI_Data.timeBetweenHallSamples * 0.001f; // Convert ms to seconds
+ 395              		.loc 1 250 0
+ 396 0056 594B     		ldr	r3, .L23+12
+ 397 0058 DB8A     		ldrh	r3, [r3, #22]
+ 398 005a 1800     		movs	r0, r3
+ 399 005c FFF7FEFF 		bl	__aeabi_i2f
+ 400 0060 031C     		adds	r3, r0, #0
+ 401 0062 5749     		ldr	r1, .L23+16
+ 402 0064 181C     		adds	r0, r3, #0
+ 403 0066 FFF7FEFF 		bl	__aeabi_fmul
+ 404 006a 031C     		adds	r3, r0, #0
+ 405 006c FB60     		str	r3, [r7, #12]
+ 251:motor.c       ****     float angularSpeed = speedRpmFloat * 6.0f; // Convert RPM to degrees per second
+ 406              		.loc 1 251 0
+ 407 006e 5549     		ldr	r1, .L23+20
+ 408 0070 3869     		ldr	r0, [r7, #16]
+ 409 0072 FFF7FEFF 		bl	__aeabi_fmul
+ 410 0076 031C     		adds	r3, r0, #0
+ 411 0078 BB60     		str	r3, [r7, #8]
+ 252:motor.c       ****     float deltaAngle = angularSpeed * dt;
+ 412              		.loc 1 252 0
+ 413 007a F968     		ldr	r1, [r7, #12]
+ 414 007c B868     		ldr	r0, [r7, #8]
+ 415 007e FFF7FEFF 		bl	__aeabi_fmul
+ 416 0082 031C     		adds	r3, r0, #0
+ 417 0084 7B60     		str	r3, [r7, #4]
+ 253:motor.c       **** 
+ 254:motor.c       ****     // Update angular position
+ 255:motor.c       ****     if (UI_Data.timeBetweenHallSamples <= 100) {
+ 418              		.loc 1 255 0
+ 419 0086 4D4B     		ldr	r3, .L23+12
+ 420 0088 DB8A     		ldrh	r3, [r3, #22]
+ 421 008a 642B     		cmp	r3, #100
+ 422 008c 3CD8     		bhi	.L14
+ 256:motor.c       ****         if (UI_Data.Dir == CLOCK_WISE) {
+ 423              		.loc 1 256 0
+ 424 008e 4B4B     		ldr	r3, .L23+12
+ 425 0090 1B79     		ldrb	r3, [r3, #4]
+ 426 0092 002B     		cmp	r3, #0
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 13
+
+
+ 427 0094 1CD1     		bne	.L15
+ 257:motor.c       ****             UI_Data.angularPos += deltaAngle / UI_Data.gearRatio;
+ 428              		.loc 1 257 0
+ 429 0096 494B     		ldr	r3, .L23+12
+ 430 0098 9C69     		ldr	r4, [r3, #24]
+ 431 009a DD69     		ldr	r5, [r3, #28]
+ 432 009c 474B     		ldr	r3, .L23+12
+ 433 009e DB88     		ldrh	r3, [r3, #6]
+ 434 00a0 1800     		movs	r0, r3
+ 435 00a2 FFF7FEFF 		bl	__aeabi_i2f
+ 436 00a6 031C     		adds	r3, r0, #0
+ 437 00a8 191C     		adds	r1, r3, #0
+ 438 00aa 7868     		ldr	r0, [r7, #4]
+ 439 00ac FFF7FEFF 		bl	__aeabi_fdiv
+ 440 00b0 031C     		adds	r3, r0, #0
+ 441 00b2 181C     		adds	r0, r3, #0
+ 442 00b4 FFF7FEFF 		bl	__aeabi_f2d
+ 443 00b8 0200     		movs	r2, r0
+ 444 00ba 0B00     		movs	r3, r1
+ 445 00bc 2000     		movs	r0, r4
+ 446 00be 2900     		movs	r1, r5
+ 447 00c0 FFF7FEFF 		bl	__aeabi_dadd
+ 448 00c4 0300     		movs	r3, r0
+ 449 00c6 0C00     		movs	r4, r1
+ 450 00c8 3C4A     		ldr	r2, .L23+12
+ 451 00ca 9361     		str	r3, [r2, #24]
+ 452 00cc D461     		str	r4, [r2, #28]
+ 453 00ce 1BE0     		b	.L14
+ 454              	.L15:
+ 258:motor.c       ****         } else {
+ 259:motor.c       ****             UI_Data.angularPos -= deltaAngle / UI_Data.gearRatio;
+ 455              		.loc 1 259 0
+ 456 00d0 3A4B     		ldr	r3, .L23+12
+ 457 00d2 9C69     		ldr	r4, [r3, #24]
+ 458 00d4 DD69     		ldr	r5, [r3, #28]
+ 459 00d6 394B     		ldr	r3, .L23+12
+ 460 00d8 DB88     		ldrh	r3, [r3, #6]
+ 461 00da 1800     		movs	r0, r3
+ 462 00dc FFF7FEFF 		bl	__aeabi_i2f
+ 463 00e0 031C     		adds	r3, r0, #0
+ 464 00e2 191C     		adds	r1, r3, #0
+ 465 00e4 7868     		ldr	r0, [r7, #4]
+ 466 00e6 FFF7FEFF 		bl	__aeabi_fdiv
+ 467 00ea 031C     		adds	r3, r0, #0
+ 468 00ec 181C     		adds	r0, r3, #0
+ 469 00ee FFF7FEFF 		bl	__aeabi_f2d
+ 470 00f2 0200     		movs	r2, r0
+ 471 00f4 0B00     		movs	r3, r1
+ 472 00f6 2000     		movs	r0, r4
+ 473 00f8 2900     		movs	r1, r5
+ 474 00fa FFF7FEFF 		bl	__aeabi_dsub
+ 475 00fe 0300     		movs	r3, r0
+ 476 0100 0C00     		movs	r4, r1
+ 477 0102 2E4A     		ldr	r2, .L23+12
+ 478 0104 9361     		str	r3, [r2, #24]
+ 479 0106 D461     		str	r4, [r2, #28]
+ 480              	.L14:
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 14
+
+
+ 260:motor.c       ****         }
+ 261:motor.c       ****     }
+ 262:motor.c       **** 
+ 263:motor.c       ****     // Prevent overflow of angular position
+ 264:motor.c       ****     if (UI_Data.angularPos >= 360.0f) {
+ 481              		.loc 1 264 0
+ 482 0108 2C4B     		ldr	r3, .L23+12
+ 483 010a 9869     		ldr	r0, [r3, #24]
+ 484 010c D969     		ldr	r1, [r3, #28]
+ 485 010e 0022     		movs	r2, #0
+ 486 0110 2D4B     		ldr	r3, .L23+24
+ 487 0112 FFF7FEFF 		bl	__aeabi_dcmpge
+ 488 0116 031E     		subs	r3, r0, #0
+ 489 0118 15D0     		beq	.L22
+ 265:motor.c       ****         UI_Data.angularPos -= 360.0f;
+ 490              		.loc 1 265 0
+ 491 011a 284B     		ldr	r3, .L23+12
+ 492 011c 9869     		ldr	r0, [r3, #24]
+ 493 011e D969     		ldr	r1, [r3, #28]
+ 494 0120 0022     		movs	r2, #0
+ 495 0122 294B     		ldr	r3, .L23+24
+ 496 0124 FFF7FEFF 		bl	__aeabi_dsub
+ 497 0128 0300     		movs	r3, r0
+ 498 012a 0C00     		movs	r4, r1
+ 499 012c 234A     		ldr	r2, .L23+12
+ 500 012e 9361     		str	r3, [r2, #24]
+ 501 0130 D461     		str	r4, [r2, #28]
+ 266:motor.c       ****         UI_Data.spinCount++;
+ 502              		.loc 1 266 0
+ 503 0132 224B     		ldr	r3, .L23+12
+ 504 0134 2022     		movs	r2, #32
+ 505 0136 9B5E     		ldrsh	r3, [r3, r2]
+ 506 0138 9BB2     		uxth	r3, r3
+ 507 013a 0133     		adds	r3, r3, #1
+ 508 013c 9BB2     		uxth	r3, r3
+ 509 013e 1AB2     		sxth	r2, r3
+ 510 0140 1E4B     		ldr	r3, .L23+12
+ 511 0142 1A84     		strh	r2, [r3, #32]
+ 512 0144 1DE0     		b	.L18
+ 513              	.L22:
+ 267:motor.c       ****     } else if (UI_Data.angularPos <= -360.0f) {
+ 514              		.loc 1 267 0
+ 515 0146 1D4B     		ldr	r3, .L23+12
+ 516 0148 9869     		ldr	r0, [r3, #24]
+ 517 014a D969     		ldr	r1, [r3, #28]
+ 518 014c 0022     		movs	r2, #0
+ 519 014e 1F4B     		ldr	r3, .L23+28
+ 520 0150 FFF7FEFF 		bl	__aeabi_dcmple
+ 521 0154 031E     		subs	r3, r0, #0
+ 522 0156 14D0     		beq	.L18
+ 268:motor.c       ****         UI_Data.angularPos += 360.0f;
+ 523              		.loc 1 268 0
+ 524 0158 184B     		ldr	r3, .L23+12
+ 525 015a 9869     		ldr	r0, [r3, #24]
+ 526 015c D969     		ldr	r1, [r3, #28]
+ 527 015e 0022     		movs	r2, #0
+ 528 0160 194B     		ldr	r3, .L23+24
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 15
+
+
+ 529 0162 FFF7FEFF 		bl	__aeabi_dadd
+ 530 0166 0300     		movs	r3, r0
+ 531 0168 0C00     		movs	r4, r1
+ 532 016a 144A     		ldr	r2, .L23+12
+ 533 016c 9361     		str	r3, [r2, #24]
+ 534 016e D461     		str	r4, [r2, #28]
+ 269:motor.c       ****         UI_Data.spinCount--;
+ 535              		.loc 1 269 0
+ 536 0170 124B     		ldr	r3, .L23+12
+ 537 0172 2022     		movs	r2, #32
+ 538 0174 9B5E     		ldrsh	r3, [r3, r2]
+ 539 0176 9BB2     		uxth	r3, r3
+ 540 0178 013B     		subs	r3, r3, #1
+ 541 017a 9BB2     		uxth	r3, r3
+ 542 017c 1AB2     		sxth	r2, r3
+ 543 017e 0F4B     		ldr	r3, .L23+12
+ 544 0180 1A84     		strh	r2, [r3, #32]
+ 545              	.L18:
+ 270:motor.c       ****     }
+ 271:motor.c       **** 
+ 272:motor.c       ****     // Store values for next cycle
+ 273:motor.c       ****     preCntCaptur = cntCaptur;
+ 546              		.loc 1 273 0
+ 547 0182 0B4B     		ldr	r3, .L23
+ 548 0184 1622     		movs	r2, #22
+ 549 0186 BA18     		adds	r2, r7, r2
+ 550 0188 1288     		ldrh	r2, [r2]
+ 551 018a 1A80     		strh	r2, [r3]
+ 274:motor.c       ****     preSpeedCur = speedCur;
+ 552              		.loc 1 274 0
+ 553 018c 094B     		ldr	r3, .L23+4
+ 554 018e 1B88     		ldrh	r3, [r3]
+ 555 0190 1800     		movs	r0, r3
+ 556 0192 FFF7FEFF 		bl	__aeabi_ui2f
+ 557 0196 021C     		adds	r2, r0, #0
+ 558 0198 0D4B     		ldr	r3, .L23+32
+ 559 019a 1A60     		str	r2, [r3]
+ 275:motor.c       ****     UI_Data.timeBetweenHallSamples = 0;
+ 560              		.loc 1 275 0
+ 561 019c 074B     		ldr	r3, .L23+12
+ 562 019e 0022     		movs	r2, #0
+ 563 01a0 DA82     		strh	r2, [r3, #22]
+ 276:motor.c       ****     
+ 277:motor.c       ****     // Clear interrupt flag
+ 278:motor.c       ****     Counter_Spd_ClearInterrupt(Counter_Spd_INTR_MASK_CC_MATCH);
+ 564              		.loc 1 278 0
+ 565 01a2 0220     		movs	r0, #2
+ 566 01a4 FFF7FEFF 		bl	Counter_Spd_ClearInterrupt
+ 279:motor.c       ****     #endif
+ 280:motor.c       **** }
+ 567              		.loc 1 280 0
+ 568 01a8 C046     		nop
+ 569 01aa BD46     		mov	sp, r7
+ 570 01ac 06B0     		add	sp, sp, #24
+ 571              		@ sp needed
+ 572 01ae B0BD     		pop	{r4, r5, r7, pc}
+ 573              	.L24:
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 16
+
+
+ 574              		.align	2
+ 575              	.L23:
+ 576 01b0 22000000 		.word	preCntCaptur.6242
+ 577 01b4 00000000 		.word	speedCur
+ 578 01b8 001BB74A 		.word	1253513984
+ 579 01bc 00000000 		.word	UI_Data
+ 580 01c0 6F12833A 		.word	981668463
+ 581 01c4 0000C040 		.word	1086324736
+ 582 01c8 00807640 		.word	1081507840
+ 583 01cc 008076C0 		.word	-1065975808
+ 584 01d0 24000000 		.word	preSpeedCur.6243
+ 585              		.cfi_endproc
+ 586              	.LFE35:
+ 587              		.size	speed_measure_isr, .-speed_measure_isr
+ 588              		.section	.text.over_current_isr,"ax",%progbits
+ 589              		.align	2
+ 590              		.global	over_current_isr
+ 591              		.code	16
+ 592              		.thumb_func
+ 593              		.type	over_current_isr, %function
+ 594              	over_current_isr:
+ 595              	.LFB36:
+ 281:motor.c       **** 
+ 282:motor.c       **** /*******************************************************************************
+ 283:motor.c       **** * Function Name: over_current_isr
+ 284:motor.c       **** ********************************************************************************
+ 285:motor.c       **** *
+ 286:motor.c       **** * Summary:
+ 287:motor.c       **** * This function is ISR for over current protection. It updates the error state flag. 
+ 288:motor.c       **** *                  
+ 289:motor.c       **** * Parameters: None
+ 290:motor.c       **** *
+ 291:motor.c       **** * Return: None
+ 292:motor.c       **** *
+ 293:motor.c       **** *******************************************************************************/
+ 294:motor.c       **** CY_ISR(over_current_isr)
+ 295:motor.c       **** {	
+ 596              		.loc 1 295 0
+ 597              		.cfi_startproc
+ 598              		@ args = 0, pretend = 0, frame = 0
+ 599              		@ frame_needed = 1, uses_anonymous_args = 0
+ 600 0000 B0B5     		push	{r4, r5, r7, lr}
+ 601              		.cfi_def_cfa_offset 16
+ 602              		.cfi_offset 4, -16
+ 603              		.cfi_offset 5, -12
+ 604              		.cfi_offset 7, -8
+ 605              		.cfi_offset 14, -4
+ 606 0002 00AF     		add	r7, sp, #0
+ 607              		.cfi_def_cfa_register 7
+ 296:motor.c       ****     if (UI_Data.motorWindupOvercurrentDisable == 0) {
+ 608              		.loc 1 296 0
+ 609 0004 134B     		ldr	r3, .L29
+ 610 0006 1B8D     		ldrh	r3, [r3, #40]
+ 611 0008 002B     		cmp	r3, #0
+ 612 000a 1FD1     		bne	.L28
+ 297:motor.c       ****         if (UI_Data.programStateManchineState == 0) {   /* Initial homing complete - continue to ne
+ 613              		.loc 1 297 0
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 17
+
+
+ 614 000c 114B     		ldr	r3, .L29
+ 615 000e 2322     		movs	r2, #35
+ 616 0010 9B5C     		ldrb	r3, [r3, r2]
+ 617 0012 002B     		cmp	r3, #0
+ 618 0014 12D1     		bne	.L27
+ 298:motor.c       ****             UI_Data.programStateManchineState = 2;
+ 619              		.loc 1 298 0
+ 620 0016 0F4B     		ldr	r3, .L29
+ 621 0018 2322     		movs	r2, #35
+ 622 001a 0221     		movs	r1, #2
+ 623 001c 9954     		strb	r1, [r3, r2]
+ 299:motor.c       ****             
+ 300:motor.c       ****             UI_Data.changeDirection = TRUE;
+ 624              		.loc 1 300 0
+ 625 001e 0D4B     		ldr	r3, .L29
+ 626 0020 2222     		movs	r2, #34
+ 627 0022 0121     		movs	r1, #1
+ 628 0024 9954     		strb	r1, [r3, r2]
+ 301:motor.c       ****             UI_Data.angularPos = -55.0;
+ 629              		.loc 1 301 0
+ 630 0026 0B4A     		ldr	r2, .L29
+ 631 0028 0023     		movs	r3, #0
+ 632 002a 0B4C     		ldr	r4, .L29+4
+ 633 002c 9361     		str	r3, [r2, #24]
+ 634 002e D461     		str	r4, [r2, #28]
+ 302:motor.c       ****             
+ 303:motor.c       ****             resetPIOut();
+ 635              		.loc 1 303 0
+ 636 0030 FFF7FEFF 		bl	resetPIOut
+ 304:motor.c       ****             
+ 305:motor.c       ****             UI_Cmd.run = FALSE;
+ 637              		.loc 1 305 0
+ 638 0034 094B     		ldr	r3, .L29+8
+ 639 0036 0022     		movs	r2, #0
+ 640 0038 1A70     		strb	r2, [r3]
+ 306:motor.c       ****             
+ 307:motor.c       **** //            IDAC_Iref_SetValue(MAX_CURR_DEFAULT);
+ 308:motor.c       ****         } else {                                        /* Unforseen overcurrent happens, stop moto
+ 309:motor.c       ****             UpdateStatusError();		
+ 310:motor.c       ****             errorState = overCur;
+ 311:motor.c       ****             LPComp_OC_ClearInterrupt(LPComp_OC_INTR_RISING);
+ 312:motor.c       ****         }
+ 313:motor.c       ****     }
+ 314:motor.c       **** }
+ 641              		.loc 1 314 0
+ 642 003a 07E0     		b	.L28
+ 643              	.L27:
+ 309:motor.c       ****             errorState = overCur;
+ 644              		.loc 1 309 0
+ 645 003c FFF7FEFF 		bl	UpdateStatusError
+ 310:motor.c       ****             LPComp_OC_ClearInterrupt(LPComp_OC_INTR_RISING);
+ 646              		.loc 1 310 0
+ 647 0040 074B     		ldr	r3, .L29+12
+ 648 0042 0122     		movs	r2, #1
+ 649 0044 1A70     		strb	r2, [r3]
+ 311:motor.c       ****         }
+ 650              		.loc 1 311 0
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 18
+
+
+ 651 0046 0120     		movs	r0, #1
+ 652 0048 FFF7FEFF 		bl	LPComp_OC_ClearInterrupt
+ 653              	.L28:
+ 654              		.loc 1 314 0
+ 655 004c C046     		nop
+ 656 004e BD46     		mov	sp, r7
+ 657              		@ sp needed
+ 658 0050 B0BD     		pop	{r4, r5, r7, pc}
+ 659              	.L30:
+ 660 0052 C046     		.align	2
+ 661              	.L29:
+ 662 0054 00000000 		.word	UI_Data
+ 663 0058 00804BC0 		.word	-1068793856
+ 664 005c 00000000 		.word	UI_Cmd
+ 665 0060 00000000 		.word	errorState
+ 666              		.cfi_endproc
+ 667              	.LFE36:
+ 668              		.size	over_current_isr, .-over_current_isr
+ 669              		.section	.text.Init_UI_FW,"ax",%progbits
+ 670              		.align	2
+ 671              		.global	Init_UI_FW
+ 672              		.code	16
+ 673              		.thumb_func
+ 674              		.type	Init_UI_FW, %function
+ 675              	Init_UI_FW:
+ 676              	.LFB37:
+ 315:motor.c       **** 
+ 316:motor.c       **** /*******************************************************************************
+ 317:motor.c       **** * Function Name: Init_UI_FW
+ 318:motor.c       **** ********************************************************************************
+ 319:motor.c       **** * Summary: This function initializes parameters used in motor running.
+ 320:motor.c       **** *  
+ 321:motor.c       **** * Parameters: None  
+ 322:motor.c       **** *
+ 323:motor.c       **** * Return: None
+ 324:motor.c       **** *  
+ 325:motor.c       **** *******************************************************************************/
+ 326:motor.c       **** 
+ 327:motor.c       **** void Init_UI_FW(void)
+ 328:motor.c       **** {
+ 677              		.loc 1 328 0
+ 678              		.cfi_startproc
+ 679              		@ args = 0, pretend = 0, frame = 0
+ 680              		@ frame_needed = 1, uses_anonymous_args = 0
+ 681 0000 90B5     		push	{r4, r7, lr}
+ 682              		.cfi_def_cfa_offset 12
+ 683              		.cfi_offset 4, -12
+ 684              		.cfi_offset 7, -8
+ 685              		.cfi_offset 14, -4
+ 686 0002 00AF     		add	r7, sp, #0
+ 687              		.cfi_def_cfa_register 7
+ 329:motor.c       ****     /* Setting UI Initial parameter*/
+ 330:motor.c       **** 	UI_Data.Dir = COUNTER_CLOCK_WISE;				
+ 688              		.loc 1 330 0
+ 689 0004 134B     		ldr	r3, .L32
+ 690 0006 0122     		movs	r2, #1
+ 691 0008 1A71     		strb	r2, [r3, #4]
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 19
+
+
+ 331:motor.c       ****     UI_Data.maxSpeedRpm = 4000;
+ 692              		.loc 1 331 0
+ 693 000a 124B     		ldr	r3, .L32
+ 694 000c FA22     		movs	r2, #250
+ 695 000e 1201     		lsls	r2, r2, #4
+ 696 0010 1A82     		strh	r2, [r3, #16]
+ 332:motor.c       ****     UI_Data.minSpeedRpm = 0; /* used to be 500, reduced to accomodate low brace rpm*/
+ 697              		.loc 1 332 0
+ 698 0012 104B     		ldr	r3, .L32
+ 699 0014 0022     		movs	r2, #0
+ 700 0016 5A82     		strh	r2, [r3, #18]
+ 333:motor.c       ****     UI_Data.speedRpmRef = 4;
+ 701              		.loc 1 333 0
+ 702 0018 0E4B     		ldr	r3, .L32
+ 703 001a 0422     		movs	r2, #4
+ 704 001c 5A81     		strh	r2, [r3, #10]
+ 334:motor.c       ****     UI_Data.gearRatio = 100;
+ 705              		.loc 1 334 0
+ 706 001e 0D4B     		ldr	r3, .L32
+ 707 0020 6422     		movs	r2, #100
+ 708 0022 DA80     		strh	r2, [r3, #6]
+ 335:motor.c       ****     UI_Data.polePairs = 4;
+ 709              		.loc 1 335 0
+ 710 0024 0B4B     		ldr	r3, .L32
+ 711 0026 0422     		movs	r2, #4
+ 712 0028 1A75     		strb	r2, [r3, #20]
+ 336:motor.c       ****     UI_Data.maxCurr = MAX_CURR_MEDIUM; 
+ 713              		.loc 1 336 0
+ 714 002a 0A4B     		ldr	r3, .L32
+ 715 002c 4B22     		movs	r2, #75
+ 716 002e 5A75     		strb	r2, [r3, #21]
+ 337:motor.c       ****     UI_Data.angularPos = 0;
+ 717              		.loc 1 337 0
+ 718 0030 084A     		ldr	r2, .L32
+ 719 0032 0023     		movs	r3, #0
+ 720 0034 0024     		movs	r4, #0
+ 721 0036 9361     		str	r3, [r2, #24]
+ 722 0038 D461     		str	r4, [r2, #28]
+ 338:motor.c       ****     UI_Data.kp = 10;   // original: 500
+ 723              		.loc 1 338 0
+ 724 003a 064B     		ldr	r3, .L32
+ 725 003c 0A22     		movs	r2, #10
+ 726 003e 9A81     		strh	r2, [r3, #12]
+ 339:motor.c       ****     UI_Data.ki = 10;    // original: 50
+ 727              		.loc 1 339 0
+ 728 0040 044B     		ldr	r3, .L32
+ 729 0042 0A22     		movs	r2, #10
+ 730 0044 DA81     		strh	r2, [r3, #14]
+ 340:motor.c       **** 	
+ 341:motor.c       ****     UI_Data.motorWindupOvercurrentDisable = 1;  // turned off after first few PWM cycles
+ 731              		.loc 1 341 0
+ 732 0046 034B     		ldr	r3, .L32
+ 733 0048 0122     		movs	r2, #1
+ 734 004a 1A85     		strh	r2, [r3, #40]
+ 342:motor.c       **** }
+ 735              		.loc 1 342 0
+ 736 004c C046     		nop
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 20
+
+
+ 737 004e BD46     		mov	sp, r7
+ 738              		@ sp needed
+ 739 0050 90BD     		pop	{r4, r7, pc}
+ 740              	.L33:
+ 741 0052 C046     		.align	2
+ 742              	.L32:
+ 743 0054 00000000 		.word	UI_Data
+ 744              		.cfi_endproc
+ 745              	.LFE37:
+ 746              		.size	Init_UI_FW, .-Init_UI_FW
+ 747              		.section	.text.Init_HW,"ax",%progbits
+ 748              		.align	2
+ 749              		.global	Init_HW
+ 750              		.code	16
+ 751              		.thumb_func
+ 752              		.type	Init_HW, %function
+ 753              	Init_HW:
+ 754              	.LFB38:
+ 343:motor.c       **** 
+ 344:motor.c       **** 
+ 345:motor.c       **** /*******************************************************************************
+ 346:motor.c       **** * Function Name: Init_HW
+ 347:motor.c       **** ********************************************************************************
+ 348:motor.c       **** * Summary: This function initializes system hardware peripherals 
+ 349:motor.c       **** *  
+ 350:motor.c       **** * Parameters: None  
+ 351:motor.c       **** *
+ 352:motor.c       **** * Return: None
+ 353:motor.c       **** *  
+ 354:motor.c       **** *******************************************************************************/
+ 355:motor.c       **** 
+ 356:motor.c       **** void Init_HW(void)
+ 357:motor.c       **** {
+ 755              		.loc 1 357 0
+ 756              		.cfi_startproc
+ 757              		@ args = 0, pretend = 0, frame = 0
+ 758              		@ frame_needed = 1, uses_anonymous_args = 0
+ 759 0000 80B5     		push	{r7, lr}
+ 760              		.cfi_def_cfa_offset 8
+ 761              		.cfi_offset 7, -8
+ 762              		.cfi_offset 14, -4
+ 763 0002 00AF     		add	r7, sp, #0
+ 764              		.cfi_def_cfa_register 7
+ 358:motor.c       ****     /*PWM Initialization*/
+ 359:motor.c       **** 	PWM_Drive_Start();
+ 765              		.loc 1 359 0
+ 766 0004 FFF7FEFF 		bl	PWM_Drive_Start
+ 360:motor.c       ****     /*Enable PWM, disable PWM IO output*/
+ 361:motor.c       ****     CtrlReg_PWMOut_Write(0x01);       
+ 767              		.loc 1 361 0
+ 768 0008 0120     		movs	r0, #1
+ 769 000a FFF7FEFF 		bl	CtrlReg_PWMOut_Write
+ 362:motor.c       ****    
+ 363:motor.c       **** 	/*Speed Counter Initialization*/
+ 364:motor.c       **** 	Counter_Spd_Start();
+ 770              		.loc 1 364 0
+ 771 000e FFF7FEFF 		bl	Counter_Spd_Start
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 21
+
+
+ 365:motor.c       **** 	
+ 366:motor.c       ****     /*Time Counter Initialization*/
+ 367:motor.c       ****     Timer_1_Start();
+ 772              		.loc 1 367 0
+ 773 0012 FFF7FEFF 		bl	Timer_1_Start
+ 368:motor.c       ****     Timer_1_Enable();
+ 774              		.loc 1 368 0
+ 775 0016 FFF7FEFF 		bl	Timer_1_Enable
+ 369:motor.c       ****     
+ 370:motor.c       ****     /*For voltage sample*/
+ 371:motor.c       **** 	ADC_SAR_Seq_1_Start();
+ 776              		.loc 1 371 0
+ 777 001a FFF7FEFF 		bl	ADC_SAR_Seq_1_Start
+ 372:motor.c       ****     
+ 373:motor.c       ****     /*For over current protection*/
+ 374:motor.c       **** 	IDAC_Iref_Start();
+ 778              		.loc 1 374 0
+ 779 001e FFF7FEFF 		bl	IDAC_Iref_Start
+ 375:motor.c       ****     IDAC_Iref_SetValue(MAX_CURR_HOMING);
+ 780              		.loc 1 375 0
+ 781 0022 0620     		movs	r0, #6
+ 782 0024 FFF7FEFF 		bl	IDAC_Iref_SetValue
+ 376:motor.c       ****     
+ 377:motor.c       ****     LPComp_OC_Start();
+ 783              		.loc 1 377 0
+ 784 0028 FFF7FEFF 		bl	LPComp_OC_Start
+ 378:motor.c       **** 	
+ 379:motor.c       ****     /*UART Init*/
+ 380:motor.c       ****     UART_BCP_Start();
+ 785              		.loc 1 380 0
+ 786 002c FFF7FEFF 		bl	UART_BCP_Start
+ 381:motor.c       **** 
+ 382:motor.c       **** 	isr_timeMeasurementForSpeed_Start();
+ 787              		.loc 1 382 0
+ 788 0030 FFF7FEFF 		bl	isr_timeMeasurementForSpeed_Start
+ 383:motor.c       **** 	isr_timeMeasurementForSpeed_StartEx(time_isr);
+ 789              		.loc 1 383 0
+ 790 0034 104B     		ldr	r3, .L35
+ 791 0036 1800     		movs	r0, r3
+ 792 0038 FFF7FEFF 		bl	isr_timeMeasurementForSpeed_StartEx
+ 384:motor.c       **** 	isr_timeMeasurementForSpeed_Enable();
+ 793              		.loc 1 384 0
+ 794 003c FFF7FEFF 		bl	isr_timeMeasurementForSpeed_Enable
+ 385:motor.c       **** 
+ 386:motor.c       **** 	isr_pwm_Start();
+ 795              		.loc 1 386 0
+ 796 0040 FFF7FEFF 		bl	isr_pwm_Start
+ 387:motor.c       **** 	isr_pwm_StartEx(pwm_isr);
+ 797              		.loc 1 387 0
+ 798 0044 0D4B     		ldr	r3, .L35+4
+ 799 0046 1800     		movs	r0, r3
+ 800 0048 FFF7FEFF 		bl	isr_pwm_StartEx
+ 388:motor.c       **** 	isr_pwm_Enable();  
+ 801              		.loc 1 388 0
+ 802 004c FFF7FEFF 		bl	isr_pwm_Enable
+ 389:motor.c       **** 	
+ 390:motor.c       **** 	isr_spd_Start(); 
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 22
+
+
+ 803              		.loc 1 390 0
+ 804 0050 FFF7FEFF 		bl	isr_spd_Start
+ 391:motor.c       **** 	isr_spd_StartEx(speed_measure_isr);    
+ 805              		.loc 1 391 0
+ 806 0054 0A4B     		ldr	r3, .L35+8
+ 807 0056 1800     		movs	r0, r3
+ 808 0058 FFF7FEFF 		bl	isr_spd_StartEx
+ 392:motor.c       **** 	isr_spd_Enable(); 	
+ 809              		.loc 1 392 0
+ 810 005c FFF7FEFF 		bl	isr_spd_Enable
+ 393:motor.c       ****     
+ 394:motor.c       **** 	isr_oc_Start(); 
+ 811              		.loc 1 394 0
+ 812 0060 FFF7FEFF 		bl	isr_oc_Start
+ 395:motor.c       **** 	isr_oc_StartEx(over_current_isr);    
+ 813              		.loc 1 395 0
+ 814 0064 074B     		ldr	r3, .L35+12
+ 815 0066 1800     		movs	r0, r3
+ 816 0068 FFF7FEFF 		bl	isr_oc_StartEx
+ 396:motor.c       **** 	isr_oc_Disable();  
+ 817              		.loc 1 396 0
+ 818 006c FFF7FEFF 		bl	isr_oc_Disable
+ 397:motor.c       **** }
+ 819              		.loc 1 397 0
+ 820 0070 C046     		nop
+ 821 0072 BD46     		mov	sp, r7
+ 822              		@ sp needed
+ 823 0074 80BD     		pop	{r7, pc}
+ 824              	.L36:
+ 825 0076 C046     		.align	2
+ 826              	.L35:
+ 827 0078 00000000 		.word	time_isr
+ 828 007c 00000000 		.word	pwm_isr
+ 829 0080 00000000 		.word	speed_measure_isr
+ 830 0084 00000000 		.word	over_current_isr
+ 831              		.cfi_endproc
+ 832              	.LFE38:
+ 833              		.size	Init_HW, .-Init_HW
+ 834              		.section	.text.Init_UI_HW,"ax",%progbits
+ 835              		.align	2
+ 836              		.global	Init_UI_HW
+ 837              		.code	16
+ 838              		.thumb_func
+ 839              		.type	Init_UI_HW, %function
+ 840              	Init_UI_HW:
+ 841              	.LFB39:
+ 398:motor.c       **** 
+ 399:motor.c       **** /*******************************************************************************
+ 400:motor.c       **** * Function Name: Init_UI_HW
+ 401:motor.c       **** ********************************************************************************
+ 402:motor.c       **** * Summary: This function initializes hardware peripherals for user interface
+ 403:motor.c       **** *  
+ 404:motor.c       **** * Parameters: None  
+ 405:motor.c       **** *
+ 406:motor.c       **** * Return: None
+ 407:motor.c       **** *  
+ 408:motor.c       **** *******************************************************************************/
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 23
+
+
+ 409:motor.c       **** void Init_UI_HW()
+ 410:motor.c       **** {
+ 842              		.loc 1 410 0
+ 843              		.cfi_startproc
+ 844              		@ args = 0, pretend = 0, frame = 0
+ 845              		@ frame_needed = 1, uses_anonymous_args = 0
+ 846 0000 80B5     		push	{r7, lr}
+ 847              		.cfi_def_cfa_offset 8
+ 848              		.cfi_offset 7, -8
+ 849              		.cfi_offset 14, -4
+ 850 0002 00AF     		add	r7, sp, #0
+ 851              		.cfi_def_cfa_register 7
+ 411:motor.c       **** 	UpdateStatusInit();
+ 852              		.loc 1 411 0
+ 853 0004 FFF7FEFF 		bl	UpdateStatusInit
+ 412:motor.c       **** }
+ 854              		.loc 1 412 0
+ 855 0008 C046     		nop
+ 856 000a BD46     		mov	sp, r7
+ 857              		@ sp needed
+ 858 000c 80BD     		pop	{r7, pc}
+ 859              		.cfi_endproc
+ 860              	.LFE39:
+ 861              		.size	Init_UI_HW, .-Init_UI_HW
+ 862 000e C046     		.bss
+ 863              		.align	1
+ 864              	preCntCaptur.6242:
+ 865 0022 0000     		.space	2
+ 866              		.align	2
+ 867              	preSpeedCur.6243:
+ 868 0024 00000000 		.space	4
+ 869              		.text
+ 870              	.Letext0:
+ 871              		.file 2 "Generated_Source\\PSoC4/cytypes.h"
+ 872              		.file 3 "motor.h"
+ 873              		.section	.debug_info,"",%progbits
+ 874              	.Ldebug_info0:
+ 875 0000 6A040000 		.4byte	0x46a
+ 876 0004 0400     		.2byte	0x4
+ 877 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 878 000a 04       		.byte	0x4
+ 879 000b 01       		.uleb128 0x1
+ 880 000c 65010000 		.4byte	.LASF69
+ 881 0010 0C       		.byte	0xc
+ 882 0011 3B010000 		.4byte	.LASF70
+ 883 0015 D1020000 		.4byte	.LASF71
+ 884 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 885 001d 00000000 		.4byte	0
+ 886 0021 00000000 		.4byte	.Ldebug_line0
+ 887 0025 02       		.uleb128 0x2
+ 888 0026 01       		.byte	0x1
+ 889 0027 06       		.byte	0x6
+ 890 0028 00010000 		.4byte	.LASF0
+ 891 002c 02       		.uleb128 0x2
+ 892 002d 01       		.byte	0x1
+ 893 002e 08       		.byte	0x8
+ 894 002f 1D020000 		.4byte	.LASF1
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 24
+
+
+ 895 0033 02       		.uleb128 0x2
+ 896 0034 02       		.byte	0x2
+ 897 0035 05       		.byte	0x5
+ 898 0036 4D000000 		.4byte	.LASF2
+ 899 003a 02       		.uleb128 0x2
+ 900 003b 02       		.byte	0x2
+ 901 003c 07       		.byte	0x7
+ 902 003d 8F020000 		.4byte	.LASF3
+ 903 0041 02       		.uleb128 0x2
+ 904 0042 04       		.byte	0x4
+ 905 0043 05       		.byte	0x5
+ 906 0044 5C010000 		.4byte	.LASF4
+ 907 0048 02       		.uleb128 0x2
+ 908 0049 04       		.byte	0x4
+ 909 004a 07       		.byte	0x7
+ 910 004b 1A030000 		.4byte	.LASF5
+ 911 004f 02       		.uleb128 0x2
+ 912 0050 08       		.byte	0x8
+ 913 0051 05       		.byte	0x5
+ 914 0052 43010000 		.4byte	.LASF6
+ 915 0056 02       		.uleb128 0x2
+ 916 0057 08       		.byte	0x8
+ 917 0058 07       		.byte	0x7
+ 918 0059 4B020000 		.4byte	.LASF7
+ 919 005d 03       		.uleb128 0x3
+ 920 005e 04       		.byte	0x4
+ 921 005f 05       		.byte	0x5
+ 922 0060 696E7400 		.ascii	"int\000"
+ 923 0064 02       		.uleb128 0x2
+ 924 0065 04       		.byte	0x4
+ 925 0066 07       		.byte	0x7
+ 926 0067 74020000 		.4byte	.LASF8
+ 927 006b 04       		.uleb128 0x4
+ 928 006c CE000000 		.4byte	.LASF9
+ 929 0070 02       		.byte	0x2
+ 930 0071 E401     		.2byte	0x1e4
+ 931 0073 2C000000 		.4byte	0x2c
+ 932 0077 04       		.uleb128 0x4
+ 933 0078 B9000000 		.4byte	.LASF10
+ 934 007c 02       		.byte	0x2
+ 935 007d E501     		.2byte	0x1e5
+ 936 007f 3A000000 		.4byte	0x3a
+ 937 0083 04       		.uleb128 0x4
+ 938 0084 0E030000 		.4byte	.LASF11
+ 939 0088 02       		.byte	0x2
+ 940 0089 E601     		.2byte	0x1e6
+ 941 008b 48000000 		.4byte	0x48
+ 942 008f 04       		.uleb128 0x4
+ 943 0090 C8000000 		.4byte	.LASF12
+ 944 0094 02       		.byte	0x2
+ 945 0095 E801     		.2byte	0x1e8
+ 946 0097 33000000 		.4byte	0x33
+ 947 009b 04       		.uleb128 0x4
+ 948 009c 39000000 		.4byte	.LASF13
+ 949 00a0 02       		.byte	0x2
+ 950 00a1 EA01     		.2byte	0x1ea
+ 951 00a3 A7000000 		.4byte	0xa7
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 25
+
+
+ 952 00a7 02       		.uleb128 0x2
+ 953 00a8 04       		.byte	0x4
+ 954 00a9 04       		.byte	0x4
+ 955 00aa 23010000 		.4byte	.LASF14
+ 956 00ae 04       		.uleb128 0x4
+ 957 00af 5B030000 		.4byte	.LASF15
+ 958 00b3 02       		.byte	0x2
+ 959 00b4 EE01     		.2byte	0x1ee
+ 960 00b6 BA000000 		.4byte	0xba
+ 961 00ba 02       		.uleb128 0x2
+ 962 00bb 08       		.byte	0x8
+ 963 00bc 04       		.byte	0x4
+ 964 00bd 36030000 		.4byte	.LASF16
+ 965 00c1 02       		.uleb128 0x2
+ 966 00c2 01       		.byte	0x1
+ 967 00c3 08       		.byte	0x8
+ 968 00c4 AC020000 		.4byte	.LASF17
+ 969 00c8 04       		.uleb128 0x4
+ 970 00c9 15030000 		.4byte	.LASF18
+ 971 00cd 02       		.byte	0x2
+ 972 00ce 8E02     		.2byte	0x28e
+ 973 00d0 D4000000 		.4byte	0xd4
+ 974 00d4 05       		.uleb128 0x5
+ 975 00d5 6B000000 		.4byte	0x6b
+ 976 00d9 02       		.uleb128 0x2
+ 977 00da 08       		.byte	0x8
+ 978 00db 04       		.byte	0x4
+ 979 00dc FF010000 		.4byte	.LASF19
+ 980 00e0 02       		.uleb128 0x2
+ 981 00e1 04       		.byte	0x4
+ 982 00e2 07       		.byte	0x7
+ 983 00e3 63000000 		.4byte	.LASF20
+ 984 00e7 06       		.uleb128 0x6
+ 985 00e8 01       		.byte	0x1
+ 986 00e9 03       		.byte	0x3
+ 987 00ea 49       		.byte	0x49
+ 988 00eb FC000000 		.4byte	0xfc
+ 989 00ef 07       		.uleb128 0x7
+ 990 00f0 72756E00 		.ascii	"run\000"
+ 991 00f4 03       		.byte	0x3
+ 992 00f5 4B       		.byte	0x4b
+ 993 00f6 6B000000 		.4byte	0x6b
+ 994 00fa 00       		.byte	0
+ 995 00fb 00       		.byte	0
+ 996 00fc 08       		.uleb128 0x8
+ 997 00fd B2000000 		.4byte	.LASF21
+ 998 0101 03       		.byte	0x3
+ 999 0102 4C       		.byte	0x4c
+ 1000 0103 E7000000 		.4byte	0xe7
+ 1001 0107 06       		.uleb128 0x6
+ 1002 0108 30       		.byte	0x30
+ 1003 0109 03       		.byte	0x3
+ 1004 010a 4F       		.byte	0x4f
+ 1005 010b F2010000 		.4byte	0x1f2
+ 1006 010f 09       		.uleb128 0x9
+ 1007 0110 09030000 		.4byte	.LASF22
+ 1008 0114 03       		.byte	0x3
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 26
+
+
+ 1009 0115 51       		.byte	0x51
+ 1010 0116 8F000000 		.4byte	0x8f
+ 1011 011a 00       		.byte	0
+ 1012 011b 09       		.uleb128 0x9
+ 1013 011c D4000000 		.4byte	.LASF23
+ 1014 0120 03       		.byte	0x3
+ 1015 0121 52       		.byte	0x52
+ 1016 0122 8F000000 		.4byte	0x8f
+ 1017 0126 02       		.byte	0x2
+ 1018 0127 07       		.uleb128 0x7
+ 1019 0128 44697200 		.ascii	"Dir\000"
+ 1020 012c 03       		.byte	0x3
+ 1021 012d 54       		.byte	0x54
+ 1022 012e 6B000000 		.4byte	0x6b
+ 1023 0132 04       		.byte	0x4
+ 1024 0133 09       		.uleb128 0x9
+ 1025 0134 31010000 		.4byte	.LASF24
+ 1026 0138 03       		.byte	0x3
+ 1027 0139 56       		.byte	0x56
+ 1028 013a 77000000 		.4byte	0x77
+ 1029 013e 06       		.byte	0x6
+ 1030 013f 09       		.uleb128 0x9
+ 1031 0140 AE030000 		.4byte	.LASF25
+ 1032 0144 03       		.byte	0x3
+ 1033 0145 57       		.byte	0x57
+ 1034 0146 77000000 		.4byte	0x77
+ 1035 014a 08       		.byte	0x8
+ 1036 014b 09       		.uleb128 0x9
+ 1037 014c F3010000 		.4byte	.LASF26
+ 1038 0150 03       		.byte	0x3
+ 1039 0151 58       		.byte	0x58
+ 1040 0152 77000000 		.4byte	0x77
+ 1041 0156 0A       		.byte	0xa
+ 1042 0157 07       		.uleb128 0x7
+ 1043 0158 6B7000   		.ascii	"kp\000"
+ 1044 015b 03       		.byte	0x3
+ 1045 015c 5A       		.byte	0x5a
+ 1046 015d 77000000 		.4byte	0x77
+ 1047 0161 0C       		.byte	0xc
+ 1048 0162 07       		.uleb128 0x7
+ 1049 0163 6B6900   		.ascii	"ki\000"
+ 1050 0166 03       		.byte	0x3
+ 1051 0167 5B       		.byte	0x5b
+ 1052 0168 77000000 		.4byte	0x77
+ 1053 016c 0E       		.byte	0xe
+ 1054 016d 09       		.uleb128 0x9
+ 1055 016e 77000000 		.4byte	.LASF27
+ 1056 0172 03       		.byte	0x3
+ 1057 0173 5D       		.byte	0x5d
+ 1058 0174 77000000 		.4byte	0x77
+ 1059 0178 10       		.byte	0x10
+ 1060 0179 09       		.uleb128 0x9
+ 1061 017a 2B020000 		.4byte	.LASF28
+ 1062 017e 03       		.byte	0x3
+ 1063 017f 5E       		.byte	0x5e
+ 1064 0180 77000000 		.4byte	0x77
+ 1065 0184 12       		.byte	0x12
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 27
+
+
+ 1066 0185 09       		.uleb128 0x9
+ 1067 0186 A2020000 		.4byte	.LASF29
+ 1068 018a 03       		.byte	0x3
+ 1069 018b 5F       		.byte	0x5f
+ 1070 018c 6B000000 		.4byte	0x6b
+ 1071 0190 14       		.byte	0x14
+ 1072 0191 09       		.uleb128 0x9
+ 1073 0192 F8000000 		.4byte	.LASF30
+ 1074 0196 03       		.byte	0x3
+ 1075 0197 60       		.byte	0x60
+ 1076 0198 6B000000 		.4byte	0x6b
+ 1077 019c 15       		.byte	0x15
+ 1078 019d 09       		.uleb128 0x9
+ 1079 019e 8F030000 		.4byte	.LASF31
+ 1080 01a2 03       		.byte	0x3
+ 1081 01a3 62       		.byte	0x62
+ 1082 01a4 77000000 		.4byte	0x77
+ 1083 01a8 16       		.byte	0x16
+ 1084 01a9 09       		.uleb128 0x9
+ 1085 01aa BB020000 		.4byte	.LASF32
+ 1086 01ae 03       		.byte	0x3
+ 1087 01af 63       		.byte	0x63
+ 1088 01b0 AE000000 		.4byte	0xae
+ 1089 01b4 18       		.byte	0x18
+ 1090 01b5 09       		.uleb128 0x9
+ 1091 01b6 0B000000 		.4byte	.LASF33
+ 1092 01ba 03       		.byte	0x3
+ 1093 01bb 64       		.byte	0x64
+ 1094 01bc 8F000000 		.4byte	0x8f
+ 1095 01c0 20       		.byte	0x20
+ 1096 01c1 09       		.uleb128 0x9
+ 1097 01c2 15000000 		.4byte	.LASF34
+ 1098 01c6 03       		.byte	0x3
+ 1099 01c7 65       		.byte	0x65
+ 1100 01c8 6B000000 		.4byte	0x6b
+ 1101 01cc 22       		.byte	0x22
+ 1102 01cd 09       		.uleb128 0x9
+ 1103 01ce B7030000 		.4byte	.LASF35
+ 1104 01d2 03       		.byte	0x3
+ 1105 01d3 66       		.byte	0x66
+ 1106 01d4 6B000000 		.4byte	0x6b
+ 1107 01d8 23       		.byte	0x23
+ 1108 01d9 09       		.uleb128 0x9
+ 1109 01da 41000000 		.4byte	.LASF36
+ 1110 01de 03       		.byte	0x3
+ 1111 01df 67       		.byte	0x67
+ 1112 01e0 9B000000 		.4byte	0x9b
+ 1113 01e4 24       		.byte	0x24
+ 1114 01e5 09       		.uleb128 0x9
+ 1115 01e6 DA000000 		.4byte	.LASF37
+ 1116 01ea 03       		.byte	0x3
+ 1117 01eb 69       		.byte	0x69
+ 1118 01ec 77000000 		.4byte	0x77
+ 1119 01f0 28       		.byte	0x28
+ 1120 01f1 00       		.byte	0
+ 1121 01f2 08       		.uleb128 0x8
+ 1122 01f3 C0000000 		.4byte	.LASF38
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 28
+
+
+ 1123 01f7 03       		.byte	0x3
+ 1124 01f8 6A       		.byte	0x6a
+ 1125 01f9 07010000 		.4byte	0x107
+ 1126 01fd 0A       		.uleb128 0xa
+ 1127 01fe 81020000 		.4byte	.LASF72
+ 1128 0202 01       		.byte	0x1
+ 1129 0203 2C000000 		.4byte	0x2c
+ 1130 0207 03       		.byte	0x3
+ 1131 0208 6E       		.byte	0x6e
+ 1132 0209 38020000 		.4byte	0x238
+ 1133 020d 0B       		.uleb128 0xb
+ 1134 020e 6C030000 		.4byte	.LASF39
+ 1135 0212 00       		.byte	0
+ 1136 0213 0B       		.uleb128 0xb
+ 1137 0214 29010000 		.4byte	.LASF40
+ 1138 0218 01       		.byte	0x1
+ 1139 0219 0B       		.uleb128 0xb
+ 1140 021a 90000000 		.4byte	.LASF41
+ 1141 021e 02       		.byte	0x2
+ 1142 021f 0B       		.uleb128 0xb
+ 1143 0220 4A030000 		.4byte	.LASF42
+ 1144 0224 03       		.byte	0x3
+ 1145 0225 0B       		.uleb128 0xb
+ 1146 0226 63030000 		.4byte	.LASF43
+ 1147 022a 04       		.byte	0x4
+ 1148 022b 0B       		.uleb128 0xb
+ 1149 022c 52030000 		.4byte	.LASF44
+ 1150 0230 05       		.byte	0x5
+ 1151 0231 0B       		.uleb128 0xb
+ 1152 0232 75030000 		.4byte	.LASF45
+ 1153 0236 06       		.byte	0x6
+ 1154 0237 00       		.byte	0
+ 1155 0238 08       		.uleb128 0x8
+ 1156 0239 87030000 		.4byte	.LASF46
+ 1157 023d 03       		.byte	0x3
+ 1158 023e 76       		.byte	0x76
+ 1159 023f FD010000 		.4byte	0x1fd
+ 1160 0243 0C       		.uleb128 0xc
+ 1161 0244 37020000 		.4byte	.LASF47
+ 1162 0248 01       		.byte	0x1
+ 1163 0249 53       		.byte	0x53
+ 1164 024a 00000000 		.4byte	.LFB32
+ 1165 024e 78000000 		.4byte	.LFE32-.LFB32
+ 1166 0252 01       		.uleb128 0x1
+ 1167 0253 9C       		.byte	0x9c
+ 1168 0254 0D       		.uleb128 0xd
+ 1169 0255 3F020000 		.4byte	.LASF73
+ 1170 0259 01       		.byte	0x1
+ 1171 025a 7C       		.byte	0x7c
+ 1172 025b 00000000 		.4byte	.LFB33
+ 1173 025f 64000000 		.4byte	.LFE33-.LFB33
+ 1174 0263 01       		.uleb128 0x1
+ 1175 0264 9C       		.byte	0x9c
+ 1176 0265 0E       		.uleb128 0xe
+ 1177 0266 1A010000 		.4byte	.LASF48
+ 1178 026a 01       		.byte	0x1
+ 1179 026b 97       		.byte	0x97
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 29
+
+
+ 1180 026c 00000000 		.4byte	.LFB34
+ 1181 0270 24000000 		.4byte	.LFE34-.LFB34
+ 1182 0274 01       		.uleb128 0x1
+ 1183 0275 9C       		.byte	0x9c
+ 1184 0276 0F       		.uleb128 0xf
+ 1185 0277 62020000 		.4byte	.LASF74
+ 1186 027b 01       		.byte	0x1
+ 1187 027c A9       		.byte	0xa9
+ 1188 027d 00000000 		.4byte	.LFB35
+ 1189 0281 D4010000 		.4byte	.LFE35-.LFB35
+ 1190 0285 01       		.uleb128 0x1
+ 1191 0286 9C       		.byte	0x9c
+ 1192 0287 F3020000 		.4byte	0x2f3
+ 1193 028b 10       		.uleb128 0x10
+ 1194 028c 2C030000 		.4byte	.LASF49
+ 1195 0290 01       		.byte	0x1
+ 1196 0291 E6       		.byte	0xe6
+ 1197 0292 77000000 		.4byte	0x77
+ 1198 0296 02       		.uleb128 0x2
+ 1199 0297 91       		.byte	0x91
+ 1200 0298 6E       		.sleb128 -18
+ 1201 0299 10       		.uleb128 0x10
+ 1202 029a 83000000 		.4byte	.LASF50
+ 1203 029e 01       		.byte	0x1
+ 1204 029f E7       		.byte	0xe7
+ 1205 02a0 77000000 		.4byte	0x77
+ 1206 02a4 05       		.uleb128 0x5
+ 1207 02a5 03       		.byte	0x3
+ 1208 02a6 22000000 		.4byte	preCntCaptur.6242
+ 1209 02aa 10       		.uleb128 0x10
+ 1210 02ab 57000000 		.4byte	.LASF51
+ 1211 02af 01       		.byte	0x1
+ 1212 02b0 E8       		.byte	0xe8
+ 1213 02b1 A7000000 		.4byte	0xa7
+ 1214 02b5 05       		.uleb128 0x5
+ 1215 02b6 03       		.byte	0x3
+ 1216 02b7 24000000 		.4byte	preSpeedCur.6243
+ 1217 02bb 10       		.uleb128 0x10
+ 1218 02bc 0C010000 		.4byte	.LASF52
+ 1219 02c0 01       		.byte	0x1
+ 1220 02c1 F6       		.byte	0xf6
+ 1221 02c2 A7000000 		.4byte	0xa7
+ 1222 02c6 02       		.uleb128 0x2
+ 1223 02c7 91       		.byte	0x91
+ 1224 02c8 68       		.sleb128 -24
+ 1225 02c9 11       		.uleb128 0x11
+ 1226 02ca 647400   		.ascii	"dt\000"
+ 1227 02cd 01       		.byte	0x1
+ 1228 02ce FA       		.byte	0xfa
+ 1229 02cf A7000000 		.4byte	0xa7
+ 1230 02d3 02       		.uleb128 0x2
+ 1231 02d4 91       		.byte	0x91
+ 1232 02d5 64       		.sleb128 -28
+ 1233 02d6 10       		.uleb128 0x10
+ 1234 02d7 3D030000 		.4byte	.LASF53
+ 1235 02db 01       		.byte	0x1
+ 1236 02dc FB       		.byte	0xfb
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 30
+
+
+ 1237 02dd A7000000 		.4byte	0xa7
+ 1238 02e1 02       		.uleb128 0x2
+ 1239 02e2 91       		.byte	0x91
+ 1240 02e3 60       		.sleb128 -32
+ 1241 02e4 10       		.uleb128 0x10
+ 1242 02e5 25000000 		.4byte	.LASF54
+ 1243 02e9 01       		.byte	0x1
+ 1244 02ea FC       		.byte	0xfc
+ 1245 02eb A7000000 		.4byte	0xa7
+ 1246 02ef 02       		.uleb128 0x2
+ 1247 02f0 91       		.byte	0x91
+ 1248 02f1 5C       		.sleb128 -36
+ 1249 02f2 00       		.byte	0
+ 1250 02f3 12       		.uleb128 0x12
+ 1251 02f4 9A000000 		.4byte	.LASF55
+ 1252 02f8 01       		.byte	0x1
+ 1253 02f9 2601     		.2byte	0x126
+ 1254 02fb 00000000 		.4byte	.LFB36
+ 1255 02ff 64000000 		.4byte	.LFE36-.LFB36
+ 1256 0303 01       		.uleb128 0x1
+ 1257 0304 9C       		.byte	0x9c
+ 1258 0305 13       		.uleb128 0x13
+ 1259 0306 6C000000 		.4byte	.LASF56
+ 1260 030a 01       		.byte	0x1
+ 1261 030b 4701     		.2byte	0x147
+ 1262 030d 00000000 		.4byte	.LFB37
+ 1263 0311 58000000 		.4byte	.LFE37-.LFB37
+ 1264 0315 01       		.uleb128 0x1
+ 1265 0316 9C       		.byte	0x9c
+ 1266 0317 12       		.uleb128 0x12
+ 1267 0318 A6030000 		.4byte	.LASF57
+ 1268 031c 01       		.byte	0x1
+ 1269 031d 6401     		.2byte	0x164
+ 1270 031f 00000000 		.4byte	.LFB38
+ 1271 0323 88000000 		.4byte	.LFE38-.LFB38
+ 1272 0327 01       		.uleb128 0x1
+ 1273 0328 9C       		.byte	0x9c
+ 1274 0329 12       		.uleb128 0x12
+ 1275 032a C6020000 		.4byte	.LASF58
+ 1276 032e 01       		.byte	0x1
+ 1277 032f 9901     		.2byte	0x199
+ 1278 0331 00000000 		.4byte	.LFB39
+ 1279 0335 0E000000 		.4byte	.LFE39-.LFB39
+ 1280 0339 01       		.uleb128 0x1
+ 1281 033a 9C       		.byte	0x9c
+ 1282 033b 14       		.uleb128 0x14
+ 1283 033c 00000000 		.4byte	.LASF59
+ 1284 0340 01       		.byte	0x1
+ 1285 0341 43       		.byte	0x43
+ 1286 0342 38020000 		.4byte	0x238
+ 1287 0346 05       		.uleb128 0x5
+ 1288 0347 03       		.byte	0x3
+ 1289 0348 00000000 		.4byte	errorState
+ 1290 034c 14       		.uleb128 0x14
+ 1291 034d AB000000 		.4byte	.LASF60
+ 1292 0351 01       		.byte	0x1
+ 1293 0352 2F       		.byte	0x2f
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 31
+
+
+ 1294 0353 FC000000 		.4byte	0xfc
+ 1295 0357 05       		.uleb128 0x5
+ 1296 0358 03       		.byte	0x3
+ 1297 0359 00000000 		.4byte	UI_Cmd
+ 1298 035d 14       		.uleb128 0x14
+ 1299 035e 01030000 		.4byte	.LASF61
+ 1300 0362 01       		.byte	0x1
+ 1301 0363 30       		.byte	0x30
+ 1302 0364 F2010000 		.4byte	0x1f2
+ 1303 0368 05       		.uleb128 0x5
+ 1304 0369 03       		.byte	0x3
+ 1305 036a 00000000 		.4byte	UI_Data
+ 1306 036e 14       		.uleb128 0x14
+ 1307 036f 31010000 		.4byte	.LASF24
+ 1308 0373 01       		.byte	0x1
+ 1309 0374 32       		.byte	0x32
+ 1310 0375 77000000 		.4byte	0x77
+ 1311 0379 05       		.uleb128 0x5
+ 1312 037a 03       		.byte	0x3
+ 1313 037b 00000000 		.4byte	gearRatio
+ 1314 037f 14       		.uleb128 0x14
+ 1315 0380 D1030000 		.4byte	.LASF62
+ 1316 0384 01       		.byte	0x1
+ 1317 0385 33       		.byte	0x33
+ 1318 0386 77000000 		.4byte	0x77
+ 1319 038a 05       		.uleb128 0x5
+ 1320 038b 03       		.byte	0x3
+ 1321 038c 00000000 		.4byte	speedRef
+ 1322 0390 14       		.uleb128 0x14
+ 1323 0391 30000000 		.4byte	.LASF63
+ 1324 0395 01       		.byte	0x1
+ 1325 0396 34       		.byte	0x34
+ 1326 0397 77000000 		.4byte	0x77
+ 1327 039b 05       		.uleb128 0x5
+ 1328 039c 03       		.byte	0x3
+ 1329 039d 00000000 		.4byte	speedCur
+ 1330 03a1 14       		.uleb128 0x14
+ 1331 03a2 BB020000 		.4byte	.LASF32
+ 1332 03a6 01       		.byte	0x1
+ 1333 03a7 39       		.byte	0x39
+ 1334 03a8 AE000000 		.4byte	0xae
+ 1335 03ac 05       		.uleb128 0x5
+ 1336 03ad 03       		.byte	0x3
+ 1337 03ae 00000000 		.4byte	angularPos
+ 1338 03b2 14       		.uleb128 0x14
+ 1339 03b3 0B000000 		.4byte	.LASF33
+ 1340 03b7 01       		.byte	0x1
+ 1341 03b8 3A       		.byte	0x3a
+ 1342 03b9 8F000000 		.4byte	0x8f
+ 1343 03bd 05       		.uleb128 0x5
+ 1344 03be 03       		.byte	0x3
+ 1345 03bf 00000000 		.4byte	spinCount
+ 1346 03c3 14       		.uleb128 0x14
+ 1347 03c4 15000000 		.4byte	.LASF34
+ 1348 03c8 01       		.byte	0x1
+ 1349 03c9 3B       		.byte	0x3b
+ 1350 03ca 6B000000 		.4byte	0x6b
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 32
+
+
+ 1351 03ce 05       		.uleb128 0x5
+ 1352 03cf 03       		.byte	0x3
+ 1353 03d0 00000000 		.4byte	changeDirection
+ 1354 03d4 14       		.uleb128 0x14
+ 1355 03d5 B7030000 		.4byte	.LASF35
+ 1356 03d9 01       		.byte	0x1
+ 1357 03da 3C       		.byte	0x3c
+ 1358 03db 6B000000 		.4byte	0x6b
+ 1359 03df 05       		.uleb128 0x5
+ 1360 03e0 03       		.byte	0x3
+ 1361 03e1 00000000 		.4byte	programStateManchineState
+ 1362 03e5 14       		.uleb128 0x14
+ 1363 03e6 57000000 		.4byte	.LASF51
+ 1364 03ea 01       		.byte	0x1
+ 1365 03eb 36       		.byte	0x36
+ 1366 03ec 77000000 		.4byte	0x77
+ 1367 03f0 05       		.uleb128 0x5
+ 1368 03f1 03       		.byte	0x3
+ 1369 03f2 00000000 		.4byte	preSpeedCur
+ 1370 03f6 14       		.uleb128 0x14
+ 1371 03f7 83000000 		.4byte	.LASF50
+ 1372 03fb 01       		.byte	0x1
+ 1373 03fc 37       		.byte	0x37
+ 1374 03fd 77000000 		.4byte	0x77
+ 1375 0401 05       		.uleb128 0x5
+ 1376 0402 03       		.byte	0x3
+ 1377 0403 00000000 		.4byte	preCntCaptur
+ 1378 0407 14       		.uleb128 0x14
+ 1379 0408 88020000 		.4byte	.LASF64
+ 1380 040c 01       		.byte	0x1
+ 1381 040d 40       		.byte	0x40
+ 1382 040e 77000000 		.4byte	0x77
+ 1383 0412 05       		.uleb128 0x5
+ 1384 0413 03       		.byte	0x3
+ 1385 0414 00000000 		.4byte	pwmCnt
+ 1386 0418 14       		.uleb128 0x14
+ 1387 0419 B1020000 		.4byte	.LASF65
+ 1388 041d 01       		.byte	0x1
+ 1389 041e 3F       		.byte	0x3f
+ 1390 041f 6B000000 		.4byte	0x6b
+ 1391 0423 05       		.uleb128 0x5
+ 1392 0424 03       		.byte	0x3
+ 1393 0425 00000000 		.4byte	dutyCycle
+ 1394 0429 14       		.uleb128 0x14
+ 1395 042a 0B020000 		.4byte	.LASF66
+ 1396 042e 01       		.byte	0x1
+ 1397 042f 44       		.byte	0x44
+ 1398 0430 6B000000 		.4byte	0x6b
+ 1399 0434 05       		.uleb128 0x5
+ 1400 0435 03       		.byte	0x3
+ 1401 0436 00000000 		.4byte	stateSys
+ 1402 043a 14       		.uleb128 0x14
+ 1403 043b 41000000 		.4byte	.LASF36
+ 1404 043f 01       		.byte	0x1
+ 1405 0440 3D       		.byte	0x3d
+ 1406 0441 9B000000 		.4byte	0x9b
+ 1407 0445 05       		.uleb128 0x5
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 33
+
+
+ 1408 0446 03       		.byte	0x3
+ 1409 0447 00000000 		.4byte	switchAngle
+ 1410 044b 14       		.uleb128 0x14
+ 1411 044c 14020000 		.4byte	.LASF67
+ 1412 0450 01       		.byte	0x1
+ 1413 0451 41       		.byte	0x41
+ 1414 0452 6B000000 		.4byte	0x6b
+ 1415 0456 05       		.uleb128 0x5
+ 1416 0457 03       		.byte	0x3
+ 1417 0458 00000000 		.4byte	firstRun
+ 1418 045c 14       		.uleb128 0x14
+ 1419 045d 51010000 		.4byte	.LASF68
+ 1420 0461 01       		.byte	0x1
+ 1421 0462 42       		.byte	0x42
+ 1422 0463 6B000000 		.4byte	0x6b
+ 1423 0467 05       		.uleb128 0x5
+ 1424 0468 03       		.byte	0x3
+ 1425 0469 00000000 		.4byte	ocBlankCnt
+ 1426 046d 00       		.byte	0
+ 1427              		.section	.debug_abbrev,"",%progbits
+ 1428              	.Ldebug_abbrev0:
+ 1429 0000 01       		.uleb128 0x1
+ 1430 0001 11       		.uleb128 0x11
+ 1431 0002 01       		.byte	0x1
+ 1432 0003 25       		.uleb128 0x25
+ 1433 0004 0E       		.uleb128 0xe
+ 1434 0005 13       		.uleb128 0x13
+ 1435 0006 0B       		.uleb128 0xb
+ 1436 0007 03       		.uleb128 0x3
+ 1437 0008 0E       		.uleb128 0xe
+ 1438 0009 1B       		.uleb128 0x1b
+ 1439 000a 0E       		.uleb128 0xe
+ 1440 000b 55       		.uleb128 0x55
+ 1441 000c 17       		.uleb128 0x17
+ 1442 000d 11       		.uleb128 0x11
+ 1443 000e 01       		.uleb128 0x1
+ 1444 000f 10       		.uleb128 0x10
+ 1445 0010 17       		.uleb128 0x17
+ 1446 0011 00       		.byte	0
+ 1447 0012 00       		.byte	0
+ 1448 0013 02       		.uleb128 0x2
+ 1449 0014 24       		.uleb128 0x24
+ 1450 0015 00       		.byte	0
+ 1451 0016 0B       		.uleb128 0xb
+ 1452 0017 0B       		.uleb128 0xb
+ 1453 0018 3E       		.uleb128 0x3e
+ 1454 0019 0B       		.uleb128 0xb
+ 1455 001a 03       		.uleb128 0x3
+ 1456 001b 0E       		.uleb128 0xe
+ 1457 001c 00       		.byte	0
+ 1458 001d 00       		.byte	0
+ 1459 001e 03       		.uleb128 0x3
+ 1460 001f 24       		.uleb128 0x24
+ 1461 0020 00       		.byte	0
+ 1462 0021 0B       		.uleb128 0xb
+ 1463 0022 0B       		.uleb128 0xb
+ 1464 0023 3E       		.uleb128 0x3e
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 34
+
+
+ 1465 0024 0B       		.uleb128 0xb
+ 1466 0025 03       		.uleb128 0x3
+ 1467 0026 08       		.uleb128 0x8
+ 1468 0027 00       		.byte	0
+ 1469 0028 00       		.byte	0
+ 1470 0029 04       		.uleb128 0x4
+ 1471 002a 16       		.uleb128 0x16
+ 1472 002b 00       		.byte	0
+ 1473 002c 03       		.uleb128 0x3
+ 1474 002d 0E       		.uleb128 0xe
+ 1475 002e 3A       		.uleb128 0x3a
+ 1476 002f 0B       		.uleb128 0xb
+ 1477 0030 3B       		.uleb128 0x3b
+ 1478 0031 05       		.uleb128 0x5
+ 1479 0032 49       		.uleb128 0x49
+ 1480 0033 13       		.uleb128 0x13
+ 1481 0034 00       		.byte	0
+ 1482 0035 00       		.byte	0
+ 1483 0036 05       		.uleb128 0x5
+ 1484 0037 35       		.uleb128 0x35
+ 1485 0038 00       		.byte	0
+ 1486 0039 49       		.uleb128 0x49
+ 1487 003a 13       		.uleb128 0x13
+ 1488 003b 00       		.byte	0
+ 1489 003c 00       		.byte	0
+ 1490 003d 06       		.uleb128 0x6
+ 1491 003e 13       		.uleb128 0x13
+ 1492 003f 01       		.byte	0x1
+ 1493 0040 0B       		.uleb128 0xb
+ 1494 0041 0B       		.uleb128 0xb
+ 1495 0042 3A       		.uleb128 0x3a
+ 1496 0043 0B       		.uleb128 0xb
+ 1497 0044 3B       		.uleb128 0x3b
+ 1498 0045 0B       		.uleb128 0xb
+ 1499 0046 01       		.uleb128 0x1
+ 1500 0047 13       		.uleb128 0x13
+ 1501 0048 00       		.byte	0
+ 1502 0049 00       		.byte	0
+ 1503 004a 07       		.uleb128 0x7
+ 1504 004b 0D       		.uleb128 0xd
+ 1505 004c 00       		.byte	0
+ 1506 004d 03       		.uleb128 0x3
+ 1507 004e 08       		.uleb128 0x8
+ 1508 004f 3A       		.uleb128 0x3a
+ 1509 0050 0B       		.uleb128 0xb
+ 1510 0051 3B       		.uleb128 0x3b
+ 1511 0052 0B       		.uleb128 0xb
+ 1512 0053 49       		.uleb128 0x49
+ 1513 0054 13       		.uleb128 0x13
+ 1514 0055 38       		.uleb128 0x38
+ 1515 0056 0B       		.uleb128 0xb
+ 1516 0057 00       		.byte	0
+ 1517 0058 00       		.byte	0
+ 1518 0059 08       		.uleb128 0x8
+ 1519 005a 16       		.uleb128 0x16
+ 1520 005b 00       		.byte	0
+ 1521 005c 03       		.uleb128 0x3
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 35
+
+
+ 1522 005d 0E       		.uleb128 0xe
+ 1523 005e 3A       		.uleb128 0x3a
+ 1524 005f 0B       		.uleb128 0xb
+ 1525 0060 3B       		.uleb128 0x3b
+ 1526 0061 0B       		.uleb128 0xb
+ 1527 0062 49       		.uleb128 0x49
+ 1528 0063 13       		.uleb128 0x13
+ 1529 0064 00       		.byte	0
+ 1530 0065 00       		.byte	0
+ 1531 0066 09       		.uleb128 0x9
+ 1532 0067 0D       		.uleb128 0xd
+ 1533 0068 00       		.byte	0
+ 1534 0069 03       		.uleb128 0x3
+ 1535 006a 0E       		.uleb128 0xe
+ 1536 006b 3A       		.uleb128 0x3a
+ 1537 006c 0B       		.uleb128 0xb
+ 1538 006d 3B       		.uleb128 0x3b
+ 1539 006e 0B       		.uleb128 0xb
+ 1540 006f 49       		.uleb128 0x49
+ 1541 0070 13       		.uleb128 0x13
+ 1542 0071 38       		.uleb128 0x38
+ 1543 0072 0B       		.uleb128 0xb
+ 1544 0073 00       		.byte	0
+ 1545 0074 00       		.byte	0
+ 1546 0075 0A       		.uleb128 0xa
+ 1547 0076 04       		.uleb128 0x4
+ 1548 0077 01       		.byte	0x1
+ 1549 0078 03       		.uleb128 0x3
+ 1550 0079 0E       		.uleb128 0xe
+ 1551 007a 0B       		.uleb128 0xb
+ 1552 007b 0B       		.uleb128 0xb
+ 1553 007c 49       		.uleb128 0x49
+ 1554 007d 13       		.uleb128 0x13
+ 1555 007e 3A       		.uleb128 0x3a
+ 1556 007f 0B       		.uleb128 0xb
+ 1557 0080 3B       		.uleb128 0x3b
+ 1558 0081 0B       		.uleb128 0xb
+ 1559 0082 01       		.uleb128 0x1
+ 1560 0083 13       		.uleb128 0x13
+ 1561 0084 00       		.byte	0
+ 1562 0085 00       		.byte	0
+ 1563 0086 0B       		.uleb128 0xb
+ 1564 0087 28       		.uleb128 0x28
+ 1565 0088 00       		.byte	0
+ 1566 0089 03       		.uleb128 0x3
+ 1567 008a 0E       		.uleb128 0xe
+ 1568 008b 1C       		.uleb128 0x1c
+ 1569 008c 0B       		.uleb128 0xb
+ 1570 008d 00       		.byte	0
+ 1571 008e 00       		.byte	0
+ 1572 008f 0C       		.uleb128 0xc
+ 1573 0090 2E       		.uleb128 0x2e
+ 1574 0091 00       		.byte	0
+ 1575 0092 3F       		.uleb128 0x3f
+ 1576 0093 19       		.uleb128 0x19
+ 1577 0094 03       		.uleb128 0x3
+ 1578 0095 0E       		.uleb128 0xe
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 36
+
+
+ 1579 0096 3A       		.uleb128 0x3a
+ 1580 0097 0B       		.uleb128 0xb
+ 1581 0098 3B       		.uleb128 0x3b
+ 1582 0099 0B       		.uleb128 0xb
+ 1583 009a 27       		.uleb128 0x27
+ 1584 009b 19       		.uleb128 0x19
+ 1585 009c 11       		.uleb128 0x11
+ 1586 009d 01       		.uleb128 0x1
+ 1587 009e 12       		.uleb128 0x12
+ 1588 009f 06       		.uleb128 0x6
+ 1589 00a0 40       		.uleb128 0x40
+ 1590 00a1 18       		.uleb128 0x18
+ 1591 00a2 9642     		.uleb128 0x2116
+ 1592 00a4 19       		.uleb128 0x19
+ 1593 00a5 00       		.byte	0
+ 1594 00a6 00       		.byte	0
+ 1595 00a7 0D       		.uleb128 0xd
+ 1596 00a8 2E       		.uleb128 0x2e
+ 1597 00a9 00       		.byte	0
+ 1598 00aa 3F       		.uleb128 0x3f
+ 1599 00ab 19       		.uleb128 0x19
+ 1600 00ac 03       		.uleb128 0x3
+ 1601 00ad 0E       		.uleb128 0xe
+ 1602 00ae 3A       		.uleb128 0x3a
+ 1603 00af 0B       		.uleb128 0xb
+ 1604 00b0 3B       		.uleb128 0x3b
+ 1605 00b1 0B       		.uleb128 0xb
+ 1606 00b2 11       		.uleb128 0x11
+ 1607 00b3 01       		.uleb128 0x1
+ 1608 00b4 12       		.uleb128 0x12
+ 1609 00b5 06       		.uleb128 0x6
+ 1610 00b6 40       		.uleb128 0x40
+ 1611 00b7 18       		.uleb128 0x18
+ 1612 00b8 9642     		.uleb128 0x2116
+ 1613 00ba 19       		.uleb128 0x19
+ 1614 00bb 00       		.byte	0
+ 1615 00bc 00       		.byte	0
+ 1616 00bd 0E       		.uleb128 0xe
+ 1617 00be 2E       		.uleb128 0x2e
+ 1618 00bf 00       		.byte	0
+ 1619 00c0 3F       		.uleb128 0x3f
+ 1620 00c1 19       		.uleb128 0x19
+ 1621 00c2 03       		.uleb128 0x3
+ 1622 00c3 0E       		.uleb128 0xe
+ 1623 00c4 3A       		.uleb128 0x3a
+ 1624 00c5 0B       		.uleb128 0xb
+ 1625 00c6 3B       		.uleb128 0x3b
+ 1626 00c7 0B       		.uleb128 0xb
+ 1627 00c8 27       		.uleb128 0x27
+ 1628 00c9 19       		.uleb128 0x19
+ 1629 00ca 11       		.uleb128 0x11
+ 1630 00cb 01       		.uleb128 0x1
+ 1631 00cc 12       		.uleb128 0x12
+ 1632 00cd 06       		.uleb128 0x6
+ 1633 00ce 40       		.uleb128 0x40
+ 1634 00cf 18       		.uleb128 0x18
+ 1635 00d0 9742     		.uleb128 0x2117
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 37
+
+
+ 1636 00d2 19       		.uleb128 0x19
+ 1637 00d3 00       		.byte	0
+ 1638 00d4 00       		.byte	0
+ 1639 00d5 0F       		.uleb128 0xf
+ 1640 00d6 2E       		.uleb128 0x2e
+ 1641 00d7 01       		.byte	0x1
+ 1642 00d8 3F       		.uleb128 0x3f
+ 1643 00d9 19       		.uleb128 0x19
+ 1644 00da 03       		.uleb128 0x3
+ 1645 00db 0E       		.uleb128 0xe
+ 1646 00dc 3A       		.uleb128 0x3a
+ 1647 00dd 0B       		.uleb128 0xb
+ 1648 00de 3B       		.uleb128 0x3b
+ 1649 00df 0B       		.uleb128 0xb
+ 1650 00e0 27       		.uleb128 0x27
+ 1651 00e1 19       		.uleb128 0x19
+ 1652 00e2 11       		.uleb128 0x11
+ 1653 00e3 01       		.uleb128 0x1
+ 1654 00e4 12       		.uleb128 0x12
+ 1655 00e5 06       		.uleb128 0x6
+ 1656 00e6 40       		.uleb128 0x40
+ 1657 00e7 18       		.uleb128 0x18
+ 1658 00e8 9642     		.uleb128 0x2116
+ 1659 00ea 19       		.uleb128 0x19
+ 1660 00eb 01       		.uleb128 0x1
+ 1661 00ec 13       		.uleb128 0x13
+ 1662 00ed 00       		.byte	0
+ 1663 00ee 00       		.byte	0
+ 1664 00ef 10       		.uleb128 0x10
+ 1665 00f0 34       		.uleb128 0x34
+ 1666 00f1 00       		.byte	0
+ 1667 00f2 03       		.uleb128 0x3
+ 1668 00f3 0E       		.uleb128 0xe
+ 1669 00f4 3A       		.uleb128 0x3a
+ 1670 00f5 0B       		.uleb128 0xb
+ 1671 00f6 3B       		.uleb128 0x3b
+ 1672 00f7 0B       		.uleb128 0xb
+ 1673 00f8 49       		.uleb128 0x49
+ 1674 00f9 13       		.uleb128 0x13
+ 1675 00fa 02       		.uleb128 0x2
+ 1676 00fb 18       		.uleb128 0x18
+ 1677 00fc 00       		.byte	0
+ 1678 00fd 00       		.byte	0
+ 1679 00fe 11       		.uleb128 0x11
+ 1680 00ff 34       		.uleb128 0x34
+ 1681 0100 00       		.byte	0
+ 1682 0101 03       		.uleb128 0x3
+ 1683 0102 08       		.uleb128 0x8
+ 1684 0103 3A       		.uleb128 0x3a
+ 1685 0104 0B       		.uleb128 0xb
+ 1686 0105 3B       		.uleb128 0x3b
+ 1687 0106 0B       		.uleb128 0xb
+ 1688 0107 49       		.uleb128 0x49
+ 1689 0108 13       		.uleb128 0x13
+ 1690 0109 02       		.uleb128 0x2
+ 1691 010a 18       		.uleb128 0x18
+ 1692 010b 00       		.byte	0
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 38
+
+
+ 1693 010c 00       		.byte	0
+ 1694 010d 12       		.uleb128 0x12
+ 1695 010e 2E       		.uleb128 0x2e
+ 1696 010f 00       		.byte	0
+ 1697 0110 3F       		.uleb128 0x3f
+ 1698 0111 19       		.uleb128 0x19
+ 1699 0112 03       		.uleb128 0x3
+ 1700 0113 0E       		.uleb128 0xe
+ 1701 0114 3A       		.uleb128 0x3a
+ 1702 0115 0B       		.uleb128 0xb
+ 1703 0116 3B       		.uleb128 0x3b
+ 1704 0117 05       		.uleb128 0x5
+ 1705 0118 27       		.uleb128 0x27
+ 1706 0119 19       		.uleb128 0x19
+ 1707 011a 11       		.uleb128 0x11
+ 1708 011b 01       		.uleb128 0x1
+ 1709 011c 12       		.uleb128 0x12
+ 1710 011d 06       		.uleb128 0x6
+ 1711 011e 40       		.uleb128 0x40
+ 1712 011f 18       		.uleb128 0x18
+ 1713 0120 9642     		.uleb128 0x2116
+ 1714 0122 19       		.uleb128 0x19
+ 1715 0123 00       		.byte	0
+ 1716 0124 00       		.byte	0
+ 1717 0125 13       		.uleb128 0x13
+ 1718 0126 2E       		.uleb128 0x2e
+ 1719 0127 00       		.byte	0
+ 1720 0128 3F       		.uleb128 0x3f
+ 1721 0129 19       		.uleb128 0x19
+ 1722 012a 03       		.uleb128 0x3
+ 1723 012b 0E       		.uleb128 0xe
+ 1724 012c 3A       		.uleb128 0x3a
+ 1725 012d 0B       		.uleb128 0xb
+ 1726 012e 3B       		.uleb128 0x3b
+ 1727 012f 05       		.uleb128 0x5
+ 1728 0130 27       		.uleb128 0x27
+ 1729 0131 19       		.uleb128 0x19
+ 1730 0132 11       		.uleb128 0x11
+ 1731 0133 01       		.uleb128 0x1
+ 1732 0134 12       		.uleb128 0x12
+ 1733 0135 06       		.uleb128 0x6
+ 1734 0136 40       		.uleb128 0x40
+ 1735 0137 18       		.uleb128 0x18
+ 1736 0138 9742     		.uleb128 0x2117
+ 1737 013a 19       		.uleb128 0x19
+ 1738 013b 00       		.byte	0
+ 1739 013c 00       		.byte	0
+ 1740 013d 14       		.uleb128 0x14
+ 1741 013e 34       		.uleb128 0x34
+ 1742 013f 00       		.byte	0
+ 1743 0140 03       		.uleb128 0x3
+ 1744 0141 0E       		.uleb128 0xe
+ 1745 0142 3A       		.uleb128 0x3a
+ 1746 0143 0B       		.uleb128 0xb
+ 1747 0144 3B       		.uleb128 0x3b
+ 1748 0145 0B       		.uleb128 0xb
+ 1749 0146 49       		.uleb128 0x49
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 39
+
+
+ 1750 0147 13       		.uleb128 0x13
+ 1751 0148 3F       		.uleb128 0x3f
+ 1752 0149 19       		.uleb128 0x19
+ 1753 014a 02       		.uleb128 0x2
+ 1754 014b 18       		.uleb128 0x18
+ 1755 014c 00       		.byte	0
+ 1756 014d 00       		.byte	0
+ 1757 014e 00       		.byte	0
+ 1758              		.section	.debug_aranges,"",%progbits
+ 1759 0000 54000000 		.4byte	0x54
+ 1760 0004 0200     		.2byte	0x2
+ 1761 0006 00000000 		.4byte	.Ldebug_info0
+ 1762 000a 04       		.byte	0x4
+ 1763 000b 00       		.byte	0
+ 1764 000c 0000     		.2byte	0
+ 1765 000e 0000     		.2byte	0
+ 1766 0010 00000000 		.4byte	.LFB32
+ 1767 0014 78000000 		.4byte	.LFE32-.LFB32
+ 1768 0018 00000000 		.4byte	.LFB33
+ 1769 001c 64000000 		.4byte	.LFE33-.LFB33
+ 1770 0020 00000000 		.4byte	.LFB34
+ 1771 0024 24000000 		.4byte	.LFE34-.LFB34
+ 1772 0028 00000000 		.4byte	.LFB35
+ 1773 002c D4010000 		.4byte	.LFE35-.LFB35
+ 1774 0030 00000000 		.4byte	.LFB36
+ 1775 0034 64000000 		.4byte	.LFE36-.LFB36
+ 1776 0038 00000000 		.4byte	.LFB37
+ 1777 003c 58000000 		.4byte	.LFE37-.LFB37
+ 1778 0040 00000000 		.4byte	.LFB38
+ 1779 0044 88000000 		.4byte	.LFE38-.LFB38
+ 1780 0048 00000000 		.4byte	.LFB39
+ 1781 004c 0E000000 		.4byte	.LFE39-.LFB39
+ 1782 0050 00000000 		.4byte	0
+ 1783 0054 00000000 		.4byte	0
+ 1784              		.section	.debug_ranges,"",%progbits
+ 1785              	.Ldebug_ranges0:
+ 1786 0000 00000000 		.4byte	.LFB32
+ 1787 0004 78000000 		.4byte	.LFE32
+ 1788 0008 00000000 		.4byte	.LFB33
+ 1789 000c 64000000 		.4byte	.LFE33
+ 1790 0010 00000000 		.4byte	.LFB34
+ 1791 0014 24000000 		.4byte	.LFE34
+ 1792 0018 00000000 		.4byte	.LFB35
+ 1793 001c D4010000 		.4byte	.LFE35
+ 1794 0020 00000000 		.4byte	.LFB36
+ 1795 0024 64000000 		.4byte	.LFE36
+ 1796 0028 00000000 		.4byte	.LFB37
+ 1797 002c 58000000 		.4byte	.LFE37
+ 1798 0030 00000000 		.4byte	.LFB38
+ 1799 0034 88000000 		.4byte	.LFE38
+ 1800 0038 00000000 		.4byte	.LFB39
+ 1801 003c 0E000000 		.4byte	.LFE39
+ 1802 0040 00000000 		.4byte	0
+ 1803 0044 00000000 		.4byte	0
+ 1804              		.section	.debug_line,"",%progbits
+ 1805              	.Ldebug_line0:
+ 1806 0000 3D010000 		.section	.debug_str,"MS",%progbits,1
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 40
+
+
+ 1806      02004D00 
+ 1806      00000201 
+ 1806      FB0E0D00 
+ 1806      01010101 
+ 1807              	.LASF59:
+ 1808 0000 6572726F 		.ascii	"errorState\000"
+ 1808      72537461 
+ 1808      746500
+ 1809              	.LASF33:
+ 1810 000b 7370696E 		.ascii	"spinCount\000"
+ 1810      436F756E 
+ 1810      7400
+ 1811              	.LASF34:
+ 1812 0015 6368616E 		.ascii	"changeDirection\000"
+ 1812      67654469 
+ 1812      72656374 
+ 1812      696F6E00 
+ 1813              	.LASF54:
+ 1814 0025 64656C74 		.ascii	"deltaAngle\000"
+ 1814      61416E67 
+ 1814      6C6500
+ 1815              	.LASF63:
+ 1816 0030 73706565 		.ascii	"speedCur\000"
+ 1816      64437572 
+ 1816      00
+ 1817              	.LASF13:
+ 1818 0039 666C6F61 		.ascii	"float32\000"
+ 1818      74333200 
+ 1819              	.LASF36:
+ 1820 0041 73776974 		.ascii	"switchAngle\000"
+ 1820      6368416E 
+ 1820      676C6500 
+ 1821              	.LASF2:
+ 1822 004d 73686F72 		.ascii	"short int\000"
+ 1822      7420696E 
+ 1822      7400
+ 1823              	.LASF51:
+ 1824 0057 70726553 		.ascii	"preSpeedCur\000"
+ 1824      70656564 
+ 1824      43757200 
+ 1825              	.LASF20:
+ 1826 0063 73697A65 		.ascii	"sizetype\000"
+ 1826      74797065 
+ 1826      00
+ 1827              	.LASF56:
+ 1828 006c 496E6974 		.ascii	"Init_UI_FW\000"
+ 1828      5F55495F 
+ 1828      465700
+ 1829              	.LASF27:
+ 1830 0077 6D617853 		.ascii	"maxSpeedRpm\000"
+ 1830      70656564 
+ 1830      52706D00 
+ 1831              	.LASF50:
+ 1832 0083 70726543 		.ascii	"preCntCaptur\000"
+ 1832      6E744361 
+ 1832      70747572 
+ 1832      00
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 41
+
+
+ 1833              	.LASF41:
+ 1834 0090 68616C6C 		.ascii	"hallError\000"
+ 1834      4572726F 
+ 1834      7200
+ 1835              	.LASF55:
+ 1836 009a 6F766572 		.ascii	"over_current_isr\000"
+ 1836      5F637572 
+ 1836      72656E74 
+ 1836      5F697372 
+ 1836      00
+ 1837              	.LASF60:
+ 1838 00ab 55495F43 		.ascii	"UI_Cmd\000"
+ 1838      6D6400
+ 1839              	.LASF21:
+ 1840 00b2 55495F43 		.ascii	"UI_CMD\000"
+ 1840      4D4400
+ 1841              	.LASF10:
+ 1842 00b9 75696E74 		.ascii	"uint16\000"
+ 1842      313600
+ 1843              	.LASF38:
+ 1844 00c0 55495F44 		.ascii	"UI_DATA\000"
+ 1844      41544100 
+ 1845              	.LASF12:
+ 1846 00c8 696E7431 		.ascii	"int16\000"
+ 1846      3600
+ 1847              	.LASF9:
+ 1848 00ce 75696E74 		.ascii	"uint8\000"
+ 1848      3800
+ 1849              	.LASF23:
+ 1850 00d4 74657374 		.ascii	"test2\000"
+ 1850      3200
+ 1851              	.LASF37:
+ 1852 00da 6D6F746F 		.ascii	"motorWindupOvercurrentDisable\000"
+ 1852      7257696E 
+ 1852      6475704F 
+ 1852      76657263 
+ 1852      75727265 
+ 1853              	.LASF30:
+ 1854 00f8 6D617843 		.ascii	"maxCurr\000"
+ 1854      75727200 
+ 1855              	.LASF0:
+ 1856 0100 7369676E 		.ascii	"signed char\000"
+ 1856      65642063 
+ 1856      68617200 
+ 1857              	.LASF52:
+ 1858 010c 73706565 		.ascii	"speedRpmFloat\000"
+ 1858      6452706D 
+ 1858      466C6F61 
+ 1858      7400
+ 1859              	.LASF48:
+ 1860 011a 74696D65 		.ascii	"time_isr\000"
+ 1860      5F697372 
+ 1860      00
+ 1861              	.LASF14:
+ 1862 0123 666C6F61 		.ascii	"float\000"
+ 1862      7400
+ 1863              	.LASF40:
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 42
+
+
+ 1864 0129 6F766572 		.ascii	"overCur\000"
+ 1864      43757200 
+ 1865              	.LASF24:
+ 1866 0131 67656172 		.ascii	"gearRatio\000"
+ 1866      52617469 
+ 1866      6F00
+ 1867              	.LASF70:
+ 1868 013b 6D6F746F 		.ascii	"motor.c\000"
+ 1868      722E6300 
+ 1869              	.LASF6:
+ 1870 0143 6C6F6E67 		.ascii	"long long int\000"
+ 1870      206C6F6E 
+ 1870      6720696E 
+ 1870      7400
+ 1871              	.LASF68:
+ 1872 0151 6F63426C 		.ascii	"ocBlankCnt\000"
+ 1872      616E6B43 
+ 1872      6E7400
+ 1873              	.LASF4:
+ 1874 015c 6C6F6E67 		.ascii	"long int\000"
+ 1874      20696E74 
+ 1874      00
+ 1875              	.LASF69:
+ 1876 0165 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1876      43313120 
+ 1876      352E342E 
+ 1876      31203230 
+ 1876      31363036 
+ 1877 0198 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m0 -mthumb -g -O"
+ 1877      20726576 
+ 1877      6973696F 
+ 1877      6E203233 
+ 1877      37373135 
+ 1878 01cb 30202D66 		.ascii	"0 -ffunction-sections -ffat-lto-objects\000"
+ 1878      66756E63 
+ 1878      74696F6E 
+ 1878      2D736563 
+ 1878      74696F6E 
+ 1879              	.LASF26:
+ 1880 01f3 73706565 		.ascii	"speedRpmRef\000"
+ 1880      6452706D 
+ 1880      52656600 
+ 1881              	.LASF19:
+ 1882 01ff 6C6F6E67 		.ascii	"long double\000"
+ 1882      20646F75 
+ 1882      626C6500 
+ 1883              	.LASF66:
+ 1884 020b 73746174 		.ascii	"stateSys\000"
+ 1884      65537973 
+ 1884      00
+ 1885              	.LASF67:
+ 1886 0214 66697273 		.ascii	"firstRun\000"
+ 1886      7452756E 
+ 1886      00
+ 1887              	.LASF1:
+ 1888 021d 756E7369 		.ascii	"unsigned char\000"
+ 1888      676E6564 
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 43
+
+
+ 1888      20636861 
+ 1888      7200
+ 1889              	.LASF28:
+ 1890 022b 6D696E53 		.ascii	"minSpeedRpm\000"
+ 1890      70656564 
+ 1890      52706D00 
+ 1891              	.LASF47:
+ 1892 0237 70776D5F 		.ascii	"pwm_isr\000"
+ 1892      69737200 
+ 1893              	.LASF73:
+ 1894 023f 64726976 		.ascii	"drive_reset\000"
+ 1894      655F7265 
+ 1894      73657400 
+ 1895              	.LASF7:
+ 1896 024b 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1896      206C6F6E 
+ 1896      6720756E 
+ 1896      7369676E 
+ 1896      65642069 
+ 1897              	.LASF74:
+ 1898 0262 73706565 		.ascii	"speed_measure_isr\000"
+ 1898      645F6D65 
+ 1898      61737572 
+ 1898      655F6973 
+ 1898      7200
+ 1899              	.LASF8:
+ 1900 0274 756E7369 		.ascii	"unsigned int\000"
+ 1900      676E6564 
+ 1900      20696E74 
+ 1900      00
+ 1901              	.LASF72:
+ 1902 0281 5F457272 		.ascii	"_Error\000"
+ 1902      6F7200
+ 1903              	.LASF64:
+ 1904 0288 70776D43 		.ascii	"pwmCnt\000"
+ 1904      6E7400
+ 1905              	.LASF3:
+ 1906 028f 73686F72 		.ascii	"short unsigned int\000"
+ 1906      7420756E 
+ 1906      7369676E 
+ 1906      65642069 
+ 1906      6E7400
+ 1907              	.LASF29:
+ 1908 02a2 706F6C65 		.ascii	"polePairs\000"
+ 1908      50616972 
+ 1908      7300
+ 1909              	.LASF17:
+ 1910 02ac 63686172 		.ascii	"char\000"
+ 1910      00
+ 1911              	.LASF65:
+ 1912 02b1 64757479 		.ascii	"dutyCycle\000"
+ 1912      4379636C 
+ 1912      6500
+ 1913              	.LASF32:
+ 1914 02bb 616E6775 		.ascii	"angularPos\000"
+ 1914      6C617250 
+ 1914      6F7300
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 44
+
+
+ 1915              	.LASF58:
+ 1916 02c6 496E6974 		.ascii	"Init_UI_HW\000"
+ 1916      5F55495F 
+ 1916      485700
+ 1917              	.LASF71:
+ 1918 02d1 443A5C53 		.ascii	"D:\\Sensored BLDC Motor Control\\control_v3.cydsn\000"
+ 1918      656E736F 
+ 1918      72656420 
+ 1918      424C4443 
+ 1918      204D6F74 
+ 1919              	.LASF61:
+ 1920 0301 55495F44 		.ascii	"UI_Data\000"
+ 1920      61746100 
+ 1921              	.LASF22:
+ 1922 0309 74657374 		.ascii	"test\000"
+ 1922      00
+ 1923              	.LASF11:
+ 1924 030e 75696E74 		.ascii	"uint32\000"
+ 1924      333200
+ 1925              	.LASF18:
+ 1926 0315 72656738 		.ascii	"reg8\000"
+ 1926      00
+ 1927              	.LASF5:
+ 1928 031a 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1928      20756E73 
+ 1928      69676E65 
+ 1928      6420696E 
+ 1928      7400
+ 1929              	.LASF49:
+ 1930 032c 636E7443 		.ascii	"cntCaptur\000"
+ 1930      61707475 
+ 1930      7200
+ 1931              	.LASF16:
+ 1932 0336 646F7562 		.ascii	"double\000"
+ 1932      6C6500
+ 1933              	.LASF53:
+ 1934 033d 616E6775 		.ascii	"angularSpeed\000"
+ 1934      6C617253 
+ 1934      70656564 
+ 1934      00
+ 1935              	.LASF42:
+ 1936 034a 6C6F7756 		.ascii	"lowVolt\000"
+ 1936      6F6C7400 
+ 1937              	.LASF44:
+ 1938 0352 64697245 		.ascii	"dirError\000"
+ 1938      72726F72 
+ 1938      00
+ 1939              	.LASF15:
+ 1940 035b 666C6F61 		.ascii	"float64\000"
+ 1940      74363400 
+ 1941              	.LASF43:
+ 1942 0363 68696768 		.ascii	"highVolt\000"
+ 1942      566F6C74 
+ 1942      00
+ 1943              	.LASF39:
+ 1944 036c 6E6F5F65 		.ascii	"no_error\000"
+ 1944      72726F72 
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\ccLKIBiW.s 			page 45
+
+
+ 1944      00
+ 1945              	.LASF45:
+ 1946 0375 73746174 		.ascii	"stateMachineError\000"
+ 1946      654D6163 
+ 1946      68696E65 
+ 1946      4572726F 
+ 1946      7200
+ 1947              	.LASF46:
+ 1948 0387 4572726F 		.ascii	"Error_T\000"
+ 1948      725F5400 
+ 1949              	.LASF31:
+ 1950 038f 74696D65 		.ascii	"timeBetweenHallSamples\000"
+ 1950      42657477 
+ 1950      65656E48 
+ 1950      616C6C53 
+ 1950      616D706C 
+ 1951              	.LASF57:
+ 1952 03a6 496E6974 		.ascii	"Init_HW\000"
+ 1952      5F485700 
+ 1953              	.LASF25:
+ 1954 03ae 73706565 		.ascii	"speedRpm\000"
+ 1954      6452706D 
+ 1954      00
+ 1955              	.LASF35:
+ 1956 03b7 70726F67 		.ascii	"programStateManchineState\000"
+ 1956      72616D53 
+ 1956      74617465 
+ 1956      4D616E63 
+ 1956      68696E65 
+ 1957              	.LASF62:
+ 1958 03d1 73706565 		.ascii	"speedRef\000"
+ 1958      64526566 
+ 1958      00
+ 1959              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

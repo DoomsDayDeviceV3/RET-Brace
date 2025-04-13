@@ -1,0 +1,6 @@
+D:\Sensored BLDC Motor Control\control_v3.cydsn\control_v3.cyprj|66a93823-0d4a-4fb0-b10b-0b18c8cb540a
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\default\CyAnnotationLibrary\CyAnnotationLibrary.cylib\CyAnnotationLibrary.cyprj|ba8f3d1a-82d5-4a9a-99a9-a32d72491260
+C:\Users\IlyR\Documents\PSoC Creator\4.2\Downloads ( 4.2).cylib\Downloads ( 4.2).cyprj|23a409e4-c18a-4e12-ad2e-7032f8e0f2e0
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cycomponentlibraryupdates\CyComponentLibraryUpdates.cylib\CyComponentLibraryUpdates.cyprj|9607f433-6246-431a-8efb-fdd62006d9ee
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cycomponentlibrary\CyComponentLibrary.cylib\CyComponentLibrary.cyprj|87c1f72a-c0a7-46c7-8b5f-2132ea83b441
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cyprimitives\CyPrimitives.cylib\CyPrimitives.cyprj|ed26dbdf-949f-432d-a50a-f319c8384eb6

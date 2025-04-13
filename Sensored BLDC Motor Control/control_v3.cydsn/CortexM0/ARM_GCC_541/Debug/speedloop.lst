@@ -1,0 +1,1225 @@
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"speedloop.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.global	piOut
+  20              		.data
+  21              		.align	2
+  22              		.type	piOut, %object
+  23              		.size	piOut, 4
+  24              	piOut:
+  25 0000 00000500 		.word	327680
+  26              		.comm	speedErr,2,2
+  27              		.global	speedErrPrev
+  28              		.bss
+  29              		.align	1
+  30              		.type	speedErrPrev, %object
+  31              		.size	speedErrPrev, 2
+  32              	speedErrPrev:
+  33 0000 0000     		.space	2
+  34              		.comm	speedErr2,2,2
+  35              		.comm	result,4,4
+  36              		.comm	kp,2,2
+  37              		.comm	ki,2,2
+  38              		.section	.text.SpeedPID,"ax",%progbits
+  39              		.align	2
+  40              		.global	SpeedPID
+  41              		.code	16
+  42              		.thumb_func
+  43              		.type	SpeedPID, %function
+  44              	SpeedPID:
+  45              	.LFB32:
+  46              		.file 1 "speedloop.c"
+   1:speedloop.c   **** /*******************************************************************************
+   2:speedloop.c   **** * Project Name		: Sensored BLDC Motor Control
+   3:speedloop.c   **** * File Name			: speedloop.c
+   4:speedloop.c   **** * Version			: 1.0
+   5:speedloop.c   **** * Device Used		: CY8C4245AXI-483     
+   6:speedloop.c   **** * Software Used		: PSoC Creator 4.2
+   7:speedloop.c   **** * Compiler Used		: ARM GCC 5.4.1 
+   8:speedloop.c   **** * Related Hardware  : CY8CKIT-042 PSoC 4 Pioneer Kit + CY8CKIT-037 PSoC 4
+   9:speedloop.c   **** *                     Motor Control Evaluation Kit
+  10:speedloop.c   **** ******************************************************************************
+  11:speedloop.c   **** * Copyright (2018), Cypress Semiconductor Corporation. All rights reserved.
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 2
+
+
+  12:speedloop.c   **** *******************************************************************************
+  13:speedloop.c   **** * This software, including source code, documentation and related materials
+  14:speedloop.c   **** * (“Software”), is owned by Cypress Semiconductor Corporation or one of its
+  15:speedloop.c   **** * subsidiaries (“Cypress”) and is protected by and subject to worldwide patent
+  16:speedloop.c   **** * protection (United States and foreign), United States copyright laws and
+  17:speedloop.c   **** * international treaty provisions. Therefore, you may use this Software only
+  18:speedloop.c   **** * as provided in the license agreement accompanying the software package from
+  19:speedloop.c   **** * which you obtained this Software (“EULA”).
+  20:speedloop.c   **** *
+  21:speedloop.c   **** * If no EULA applies, Cypress hereby grants you a personal, nonexclusive,
+  22:speedloop.c   **** * non-transferable license to copy, modify, and compile the Software source
+  23:speedloop.c   **** * code solely for use in connection with Cypress’s integrated circuit products.
+  24:speedloop.c   **** * Any reproduction, modification, translation, compilation, or representation
+  25:speedloop.c   **** * of this Software except as specified above is prohibited without the express
+  26:speedloop.c   **** * written permission of Cypress.
+  27:speedloop.c   **** *
+  28:speedloop.c   **** * Disclaimer: THIS SOFTWARE IS PROVIDED AS-IS, WITH NO WARRANTY OF ANY KIND, 
+  29:speedloop.c   **** * EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, NONINFRINGEMENT, IMPLIED 
+  30:speedloop.c   **** * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. Cypress 
+  31:speedloop.c   **** * reserves the right to make changes to the Software without notice. Cypress 
+  32:speedloop.c   **** * does not assume any liability arising out of the application or use of the 
+  33:speedloop.c   **** * Software or any product or circuit described in the Software. Cypress does 
+  34:speedloop.c   **** * not authorize its products for use in any products where a malfunction or 
+  35:speedloop.c   **** * failure of the Cypress product may reasonably be expected to result in 
+  36:speedloop.c   **** * significant property damage, injury or death (“High Risk Product”). By 
+  37:speedloop.c   **** * including Cypress’s product in a High Risk Product, the manufacturer of such 
+  38:speedloop.c   **** * system or application assumes all risk of such use and in doing so agrees to 
+  39:speedloop.c   **** * indemnify Cypress against all liability.
+  40:speedloop.c   **** *******************************************************************************/
+  41:speedloop.c   **** #include <project.h>
+  42:speedloop.c   **** #include "speed.h"
+  43:speedloop.c   **** #include "motor.h"
+  44:speedloop.c   **** 
+  45:speedloop.c   **** #define SAFE_SHIFT(piout) (((piout) < 0) ? 0 : (((piout) + (1 << 15)) >> 16)) 
+  46:speedloop.c   **** 
+  47:speedloop.c   **** int32 piOut = INIT_PIOUT;       /* 60*(1<<16)PI loop output value */
+  48:speedloop.c   **** 
+  49:speedloop.c   **** int16 speedErr;
+  50:speedloop.c   **** int16 speedErrPrev = 0x00;
+  51:speedloop.c   **** int16 speedErr2;
+  52:speedloop.c   **** int32 result;
+  53:speedloop.c   **** uint16 kp,ki;
+  54:speedloop.c   **** 
+  55:speedloop.c   **** /*******************************************************************************
+  56:speedloop.c   **** * Function Name: SpeedPID
+  57:speedloop.c   **** ********************************************************************************
+  58:speedloop.c   **** * Summary:
+  59:speedloop.c   **** * The SpeedPID function implements PID regulator for motor speed closed loop control.. 
+  60:speedloop.c   **** *
+  61:speedloop.c   **** * Parameters: None
+  62:speedloop.c   **** *    
+  63:speedloop.c   **** * Return: None
+  64:speedloop.c   **** *
+  65:speedloop.c   **** *******************************************************************************/
+  66:speedloop.c   **** void SpeedPID(void)
+  67:speedloop.c   **** {
+  47              		.loc 1 67 0
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 3
+
+
+  48              		.cfi_startproc
+  49              		@ args = 0, pretend = 0, frame = 0
+  50              		@ frame_needed = 1, uses_anonymous_args = 0
+  51 0000 80B5     		push	{r7, lr}
+  52              		.cfi_def_cfa_offset 8
+  53              		.cfi_offset 7, -8
+  54              		.cfi_offset 14, -4
+  55 0002 00AF     		add	r7, sp, #0
+  56              		.cfi_def_cfa_register 7
+  68:speedloop.c   ****   
+  69:speedloop.c   **** //    if(speedRef > MIDDLE_SPEED_CMD) 		/* Low Speed, Low Coefficient  */
+  70:speedloop.c   **** //    {
+  71:speedloop.c   **** //        kp = UI_Data.kp;
+  72:speedloop.c   **** //        ki = UI_Data.ki;
+  73:speedloop.c   **** //    }
+  74:speedloop.c   **** //    else									/* High Speed, High Coefficient  */
+  75:speedloop.c   **** //    {
+  76:speedloop.c   **** //        kp = UI_Data.kp << 1;
+  77:speedloop.c   **** //        ki = UI_Data.ki << 1;
+  78:speedloop.c   **** //    }
+  79:speedloop.c   ****     
+  80:speedloop.c   ****     kp = UI_Data.kp;
+  57              		.loc 1 80 0
+  58 0004 344B     		ldr	r3, .L4
+  59 0006 9A89     		ldrh	r2, [r3, #12]
+  60 0008 344B     		ldr	r3, .L4+4
+  61 000a 1A80     		strh	r2, [r3]
+  81:speedloop.c   ****     ki = UI_Data.ki;
+  62              		.loc 1 81 0
+  63 000c 324B     		ldr	r3, .L4
+  64 000e DA89     		ldrh	r2, [r3, #14]
+  65 0010 334B     		ldr	r3, .L4+8
+  66 0012 1A80     		strh	r2, [r3]
+  82:speedloop.c   ****    
+  83:speedloop.c   ****     speedErr = speedCur - speedRef; 
+  67              		.loc 1 83 0
+  68 0014 334B     		ldr	r3, .L4+12
+  69 0016 1A88     		ldrh	r2, [r3]
+  70 0018 334B     		ldr	r3, .L4+16
+  71 001a 1B88     		ldrh	r3, [r3]
+  72 001c D31A     		subs	r3, r2, r3
+  73 001e 9BB2     		uxth	r3, r3
+  74 0020 1AB2     		sxth	r2, r3
+  75 0022 324B     		ldr	r3, .L4+20
+  76 0024 1A80     		strh	r2, [r3]
+  84:speedloop.c   ****     
+  85:speedloop.c   ****     /* Calculate output of integration */	
+  86:speedloop.c   ****     result = (int32)(speedErr * ki);		
+  77              		.loc 1 86 0
+  78 0026 314B     		ldr	r3, .L4+20
+  79 0028 0022     		movs	r2, #0
+  80 002a 9B5E     		ldrsh	r3, [r3, r2]
+  81 002c 1A00     		movs	r2, r3
+  82 002e 2C4B     		ldr	r3, .L4+8
+  83 0030 1B88     		ldrh	r3, [r3]
+  84 0032 5A43     		muls	r2, r3
+  85 0034 2E4B     		ldr	r3, .L4+24
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 4
+
+
+  86 0036 1A60     		str	r2, [r3]
+  87:speedloop.c   **** 	piOut += result;
+  87              		.loc 1 87 0
+  88 0038 2E4B     		ldr	r3, .L4+28
+  89 003a 1A68     		ldr	r2, [r3]
+  90 003c 2C4B     		ldr	r3, .L4+24
+  91 003e 1B68     		ldr	r3, [r3]
+  92 0040 D218     		adds	r2, r2, r3
+  93 0042 2C4B     		ldr	r3, .L4+28
+  94 0044 1A60     		str	r2, [r3]
+  88:speedloop.c   **** 	
+  89:speedloop.c   ****     /* Calculate output of proportional */		
+  90:speedloop.c   **** 	speedErr2 = (speedErr-speedErrPrev);			
+  95              		.loc 1 90 0
+  96 0046 294B     		ldr	r3, .L4+20
+  97 0048 0022     		movs	r2, #0
+  98 004a 9B5E     		ldrsh	r3, [r3, r2]
+  99 004c 9AB2     		uxth	r2, r3
+ 100 004e 2A4B     		ldr	r3, .L4+32
+ 101 0050 0021     		movs	r1, #0
+ 102 0052 5B5E     		ldrsh	r3, [r3, r1]
+ 103 0054 9BB2     		uxth	r3, r3
+ 104 0056 D31A     		subs	r3, r2, r3
+ 105 0058 9BB2     		uxth	r3, r3
+ 106 005a 1AB2     		sxth	r2, r3
+ 107 005c 274B     		ldr	r3, .L4+36
+ 108 005e 1A80     		strh	r2, [r3]
+  91:speedloop.c   **** 	speedErrPrev = speedErr;
+ 109              		.loc 1 91 0
+ 110 0060 224B     		ldr	r3, .L4+20
+ 111 0062 0022     		movs	r2, #0
+ 112 0064 9A5E     		ldrsh	r2, [r3, r2]
+ 113 0066 244B     		ldr	r3, .L4+32
+ 114 0068 1A80     		strh	r2, [r3]
+  92:speedloop.c   **** 	
+  93:speedloop.c   **** 	result = (int32)(speedErr2 * kp);
+ 115              		.loc 1 93 0
+ 116 006a 244B     		ldr	r3, .L4+36
+ 117 006c 0022     		movs	r2, #0
+ 118 006e 9B5E     		ldrsh	r3, [r3, r2]
+ 119 0070 1A00     		movs	r2, r3
+ 120 0072 1A4B     		ldr	r3, .L4+4
+ 121 0074 1B88     		ldrh	r3, [r3]
+ 122 0076 5A43     		muls	r2, r3
+ 123 0078 1D4B     		ldr	r3, .L4+24
+ 124 007a 1A60     		str	r2, [r3]
+  94:speedloop.c   **** 	piOut += result;
+ 125              		.loc 1 94 0
+ 126 007c 1D4B     		ldr	r3, .L4+28
+ 127 007e 1A68     		ldr	r2, [r3]
+ 128 0080 1B4B     		ldr	r3, .L4+24
+ 129 0082 1B68     		ldr	r3, [r3]
+ 130 0084 D218     		adds	r2, r2, r3
+ 131 0086 1B4B     		ldr	r3, .L4+28
+ 132 0088 1A60     		str	r2, [r3]
+  95:speedloop.c   **** 	
+  96:speedloop.c   **** 
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 5
+
+
+  97:speedloop.c   **** 	if(piOut>PIOUT_MAX)
+ 133              		.loc 1 97 0
+ 134 008a 1A4B     		ldr	r3, .L4+28
+ 135 008c 1A68     		ldr	r2, [r3]
+ 136 008e AA23     		movs	r3, #170
+ 137 0090 1B04     		lsls	r3, r3, #16
+ 138 0092 9A42     		cmp	r2, r3
+ 139 0094 03DD     		ble	.L2
+  98:speedloop.c   **** 		piOut= PIOUT_MAX;
+ 140              		.loc 1 98 0
+ 141 0096 174B     		ldr	r3, .L4+28
+ 142 0098 AA22     		movs	r2, #170
+ 143 009a 1204     		lsls	r2, r2, #16
+ 144 009c 1A60     		str	r2, [r3]
+ 145              	.L2:
+  99:speedloop.c   ****     if(piOut<PIOUT_MIN)
+ 146              		.loc 1 99 0
+ 147 009e 154B     		ldr	r3, .L4+28
+ 148 00a0 1B68     		ldr	r3, [r3]
+ 149 00a2 174A     		ldr	r2, .L4+40
+ 150 00a4 9342     		cmp	r3, r2
+ 151 00a6 03DC     		bgt	.L3
+ 100:speedloop.c   **** 		piOut= PIOUT_MIN;
+ 152              		.loc 1 100 0
+ 153 00a8 124B     		ldr	r3, .L4+28
+ 154 00aa 8022     		movs	r2, #128
+ 155 00ac 5203     		lsls	r2, r2, #13
+ 156 00ae 1A60     		str	r2, [r3]
+ 157              	.L3:
+ 101:speedloop.c   **** //    if (UI_Data.speedRpm > 10) {
+ 102:speedloop.c   **** //        if(piOut<PIOUT_MIN)
+ 103:speedloop.c   **** //    		piOut= PIOUT_MIN;
+ 104:speedloop.c   **** //    } else {
+ 105:speedloop.c   **** //        if(piOut<0x10000)
+ 106:speedloop.c   **** //    		piOut= 0x10000;
+ 107:speedloop.c   **** //    }
+ 108:speedloop.c   ****     
+ 109:speedloop.c   **** 	dutyCycle = piOut>>16; 
+ 158              		.loc 1 109 0
+ 159 00b0 104B     		ldr	r3, .L4+28
+ 160 00b2 1B68     		ldr	r3, [r3]
+ 161 00b4 1B14     		asrs	r3, r3, #16
+ 162 00b6 DAB2     		uxtb	r2, r3
+ 163 00b8 124B     		ldr	r3, .L4+44
+ 164 00ba 1A70     		strb	r2, [r3]
+ 110:speedloop.c   **** 
+ 111:speedloop.c   ****     UI_Data.test2 = dutyCycle;
+ 165              		.loc 1 111 0
+ 166 00bc 114B     		ldr	r3, .L4+44
+ 167 00be 1B78     		ldrb	r3, [r3]
+ 168 00c0 1AB2     		sxth	r2, r3
+ 169 00c2 054B     		ldr	r3, .L4
+ 170 00c4 5A80     		strh	r2, [r3, #2]
+ 112:speedloop.c   ****     
+ 113:speedloop.c   **** 	PWM_Drive_WriteCompare(dutyCycle);
+ 171              		.loc 1 113 0
+ 172 00c6 0F4B     		ldr	r3, .L4+44
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 6
+
+
+ 173 00c8 1B78     		ldrb	r3, [r3]
+ 174 00ca 1800     		movs	r0, r3
+ 175 00cc FFF7FEFF 		bl	PWM_Drive_WriteCompare
+ 114:speedloop.c   **** }
+ 176              		.loc 1 114 0
+ 177 00d0 C046     		nop
+ 178 00d2 BD46     		mov	sp, r7
+ 179              		@ sp needed
+ 180 00d4 80BD     		pop	{r7, pc}
+ 181              	.L5:
+ 182 00d6 C046     		.align	2
+ 183              	.L4:
+ 184 00d8 00000000 		.word	UI_Data
+ 185 00dc 00000000 		.word	kp
+ 186 00e0 00000000 		.word	ki
+ 187 00e4 00000000 		.word	speedCur
+ 188 00e8 00000000 		.word	speedRef
+ 189 00ec 00000000 		.word	speedErr
+ 190 00f0 00000000 		.word	result
+ 191 00f4 00000000 		.word	piOut
+ 192 00f8 00000000 		.word	speedErrPrev
+ 193 00fc 00000000 		.word	speedErr2
+ 194 0100 FFFF0F00 		.word	1048575
+ 195 0104 00000000 		.word	dutyCycle
+ 196              		.cfi_endproc
+ 197              	.LFE32:
+ 198              		.size	SpeedPID, .-SpeedPID
+ 199              		.section	.text.resetPIOut,"ax",%progbits
+ 200              		.align	2
+ 201              		.global	resetPIOut
+ 202              		.code	16
+ 203              		.thumb_func
+ 204              		.type	resetPIOut, %function
+ 205              	resetPIOut:
+ 206              	.LFB33:
+ 115:speedloop.c   **** 
+ 116:speedloop.c   **** /*******************************************************************************
+ 117:speedloop.c   **** * Function Name: resetPIOut
+ 118:speedloop.c   **** ********************************************************************************
+ 119:speedloop.c   **** * Summary:
+ 120:speedloop.c   **** * reset SpeedPID 
+ 121:speedloop.c   **** *
+ 122:speedloop.c   **** * Parameters: None
+ 123:speedloop.c   **** *    
+ 124:speedloop.c   **** * Return: None
+ 125:speedloop.c   **** *
+ 126:speedloop.c   **** *******************************************************************************/
+ 127:speedloop.c   **** void resetPIOut(void)
+ 128:speedloop.c   **** {
+ 207              		.loc 1 128 0
+ 208              		.cfi_startproc
+ 209              		@ args = 0, pretend = 0, frame = 0
+ 210              		@ frame_needed = 1, uses_anonymous_args = 0
+ 211 0000 80B5     		push	{r7, lr}
+ 212              		.cfi_def_cfa_offset 8
+ 213              		.cfi_offset 7, -8
+ 214              		.cfi_offset 14, -4
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 7
+
+
+ 215 0002 00AF     		add	r7, sp, #0
+ 216              		.cfi_def_cfa_register 7
+ 129:speedloop.c   ****     piOut = INIT_PIOUT;
+ 217              		.loc 1 129 0
+ 218 0004 074B     		ldr	r3, .L7
+ 219 0006 A022     		movs	r2, #160
+ 220 0008 D202     		lsls	r2, r2, #11
+ 221 000a 1A60     		str	r2, [r3]
+ 130:speedloop.c   ****     speedErr = 0;
+ 222              		.loc 1 130 0
+ 223 000c 064B     		ldr	r3, .L7+4
+ 224 000e 0022     		movs	r2, #0
+ 225 0010 1A80     		strh	r2, [r3]
+ 131:speedloop.c   ****     speedErrPrev = speedErr;
+ 226              		.loc 1 131 0
+ 227 0012 054B     		ldr	r3, .L7+4
+ 228 0014 0022     		movs	r2, #0
+ 229 0016 9A5E     		ldrsh	r2, [r3, r2]
+ 230 0018 044B     		ldr	r3, .L7+8
+ 231 001a 1A80     		strh	r2, [r3]
+ 132:speedloop.c   **** }
+ 232              		.loc 1 132 0
+ 233 001c C046     		nop
+ 234 001e BD46     		mov	sp, r7
+ 235              		@ sp needed
+ 236 0020 80BD     		pop	{r7, pc}
+ 237              	.L8:
+ 238 0022 C046     		.align	2
+ 239              	.L7:
+ 240 0024 00000000 		.word	piOut
+ 241 0028 00000000 		.word	speedErr
+ 242 002c 00000000 		.word	speedErrPrev
+ 243              		.cfi_endproc
+ 244              	.LFE33:
+ 245              		.size	resetPIOut, .-resetPIOut
+ 246              		.text
+ 247              	.Letext0:
+ 248              		.file 2 "Generated_Source\\PSoC4/cytypes.h"
+ 249              		.file 3 "motor.h"
+ 250              		.section	.debug_info,"",%progbits
+ 251              	.Ldebug_info0:
+ 252 0000 8C020000 		.4byte	0x28c
+ 253 0004 0400     		.2byte	0x4
+ 254 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 255 000a 04       		.byte	0x4
+ 256 000b 01       		.uleb128 0x1
+ 257 000c F8000000 		.4byte	.LASF48
+ 258 0010 0C       		.byte	0xc
+ 259 0011 97020000 		.4byte	.LASF49
+ 260 0015 15020000 		.4byte	.LASF50
+ 261 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 262 001d 00000000 		.4byte	0
+ 263 0021 00000000 		.4byte	.Ldebug_line0
+ 264 0025 02       		.uleb128 0x2
+ 265 0026 01       		.byte	0x1
+ 266 0027 06       		.byte	0x6
+ 267 0028 B7020000 		.4byte	.LASF0
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 8
+
+
+ 268 002c 02       		.uleb128 0x2
+ 269 002d 01       		.byte	0x1
+ 270 002e 08       		.byte	0x8
+ 271 002f 8F010000 		.4byte	.LASF1
+ 272 0033 02       		.uleb128 0x2
+ 273 0034 02       		.byte	0x2
+ 274 0035 05       		.byte	0x5
+ 275 0036 86000000 		.4byte	.LASF2
+ 276 003a 02       		.uleb128 0x2
+ 277 003b 02       		.byte	0x2
+ 278 003c 07       		.byte	0x7
+ 279 003d C3020000 		.4byte	.LASF3
+ 280 0041 02       		.uleb128 0x2
+ 281 0042 04       		.byte	0x4
+ 282 0043 05       		.byte	0x5
+ 283 0044 6D000000 		.4byte	.LASF4
+ 284 0048 02       		.uleb128 0x2
+ 285 0049 04       		.byte	0x4
+ 286 004a 07       		.byte	0x7
+ 287 004b E0000000 		.4byte	.LASF5
+ 288 004f 02       		.uleb128 0x2
+ 289 0050 08       		.byte	0x8
+ 290 0051 05       		.byte	0x5
+ 291 0052 4E020000 		.4byte	.LASF6
+ 292 0056 02       		.uleb128 0x2
+ 293 0057 08       		.byte	0x8
+ 294 0058 07       		.byte	0x7
+ 295 0059 EC010000 		.4byte	.LASF7
+ 296 005d 03       		.uleb128 0x3
+ 297 005e 04       		.byte	0x4
+ 298 005f 05       		.byte	0x5
+ 299 0060 696E7400 		.ascii	"int\000"
+ 300 0064 02       		.uleb128 0x2
+ 301 0065 04       		.byte	0x4
+ 302 0066 07       		.byte	0x7
+ 303 0067 DF010000 		.4byte	.LASF8
+ 304 006b 04       		.uleb128 0x4
+ 305 006c 91020000 		.4byte	.LASF9
+ 306 0070 02       		.byte	0x2
+ 307 0071 E401     		.2byte	0x1e4
+ 308 0073 2C000000 		.4byte	0x2c
+ 309 0077 04       		.uleb128 0x4
+ 310 0078 BD010000 		.4byte	.LASF10
+ 311 007c 02       		.byte	0x2
+ 312 007d E501     		.2byte	0x1e5
+ 313 007f 3A000000 		.4byte	0x3a
+ 314 0083 04       		.uleb128 0x4
+ 315 0084 DA000000 		.4byte	.LASF11
+ 316 0088 02       		.byte	0x2
+ 317 0089 E801     		.2byte	0x1e8
+ 318 008b 33000000 		.4byte	0x33
+ 319 008f 04       		.uleb128 0x4
+ 320 0090 F2000000 		.4byte	.LASF12
+ 321 0094 02       		.byte	0x2
+ 322 0095 E901     		.2byte	0x1e9
+ 323 0097 41000000 		.4byte	0x41
+ 324 009b 04       		.uleb128 0x4
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 9
+
+
+ 325 009c A3020000 		.4byte	.LASF13
+ 326 00a0 02       		.byte	0x2
+ 327 00a1 EA01     		.2byte	0x1ea
+ 328 00a3 A7000000 		.4byte	0xa7
+ 329 00a7 02       		.uleb128 0x2
+ 330 00a8 04       		.byte	0x4
+ 331 00a9 04       		.byte	0x4
+ 332 00aa B8000000 		.4byte	.LASF14
+ 333 00ae 04       		.uleb128 0x4
+ 334 00af 28000000 		.4byte	.LASF15
+ 335 00b3 02       		.byte	0x2
+ 336 00b4 EE01     		.2byte	0x1ee
+ 337 00b6 BA000000 		.4byte	0xba
+ 338 00ba 02       		.uleb128 0x2
+ 339 00bb 08       		.byte	0x8
+ 340 00bc 04       		.byte	0x4
+ 341 00bd 9D010000 		.4byte	.LASF16
+ 342 00c1 02       		.uleb128 0x2
+ 343 00c2 01       		.byte	0x1
+ 344 00c3 08       		.byte	0x8
+ 345 00c4 5C020000 		.4byte	.LASF17
+ 346 00c8 02       		.uleb128 0x2
+ 347 00c9 08       		.byte	0x8
+ 348 00ca 04       		.byte	0x4
+ 349 00cb AB020000 		.4byte	.LASF18
+ 350 00cf 02       		.uleb128 0x2
+ 351 00d0 04       		.byte	0x4
+ 352 00d1 07       		.byte	0x7
+ 353 00d2 45020000 		.4byte	.LASF19
+ 354 00d6 05       		.uleb128 0x5
+ 355 00d7 30       		.byte	0x30
+ 356 00d8 03       		.byte	0x3
+ 357 00d9 4F       		.byte	0x4f
+ 358 00da C1010000 		.4byte	0x1c1
+ 359 00de 06       		.uleb128 0x6
+ 360 00df DA010000 		.4byte	.LASF20
+ 361 00e3 03       		.byte	0x3
+ 362 00e4 51       		.byte	0x51
+ 363 00e5 83000000 		.4byte	0x83
+ 364 00e9 00       		.byte	0
+ 365 00ea 06       		.uleb128 0x6
+ 366 00eb CA010000 		.4byte	.LASF21
+ 367 00ef 03       		.byte	0x3
+ 368 00f0 52       		.byte	0x52
+ 369 00f1 83000000 		.4byte	0x83
+ 370 00f5 02       		.byte	0x2
+ 371 00f6 07       		.uleb128 0x7
+ 372 00f7 44697200 		.ascii	"Dir\000"
+ 373 00fb 03       		.byte	0x3
+ 374 00fc 54       		.byte	0x54
+ 375 00fd 6B000000 		.4byte	0x6b
+ 376 0101 04       		.byte	0x4
+ 377 0102 06       		.uleb128 0x6
+ 378 0103 D0000000 		.4byte	.LASF22
+ 379 0107 03       		.byte	0x3
+ 380 0108 56       		.byte	0x56
+ 381 0109 77000000 		.4byte	0x77
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 10
+
+
+ 382 010d 06       		.byte	0x6
+ 383 010e 06       		.uleb128 0x6
+ 384 010f 88020000 		.4byte	.LASF23
+ 385 0113 03       		.byte	0x3
+ 386 0114 57       		.byte	0x57
+ 387 0115 77000000 		.4byte	0x77
+ 388 0119 08       		.byte	0x8
+ 389 011a 06       		.uleb128 0x6
+ 390 011b 56000000 		.4byte	.LASF24
+ 391 011f 03       		.byte	0x3
+ 392 0120 58       		.byte	0x58
+ 393 0121 77000000 		.4byte	0x77
+ 394 0125 0A       		.byte	0xa
+ 395 0126 07       		.uleb128 0x7
+ 396 0127 6B7000   		.ascii	"kp\000"
+ 397 012a 03       		.byte	0x3
+ 398 012b 5A       		.byte	0x5a
+ 399 012c 77000000 		.4byte	0x77
+ 400 0130 0C       		.byte	0xc
+ 401 0131 07       		.uleb128 0x7
+ 402 0132 6B6900   		.ascii	"ki\000"
+ 403 0135 03       		.byte	0x3
+ 404 0136 5B       		.byte	0x5b
+ 405 0137 77000000 		.4byte	0x77
+ 406 013b 0E       		.byte	0xe
+ 407 013c 06       		.uleb128 0x6
+ 408 013d 08000000 		.4byte	.LASF25
+ 409 0141 03       		.byte	0x3
+ 410 0142 5D       		.byte	0x5d
+ 411 0143 77000000 		.4byte	0x77
+ 412 0147 10       		.byte	0x10
+ 413 0148 06       		.uleb128 0x6
+ 414 0149 4A000000 		.4byte	.LASF26
+ 415 014d 03       		.byte	0x3
+ 416 014e 5E       		.byte	0x5e
+ 417 014f 77000000 		.4byte	0x77
+ 418 0153 12       		.byte	0x12
+ 419 0154 06       		.uleb128 0x6
+ 420 0155 90000000 		.4byte	.LASF27
+ 421 0159 03       		.byte	0x3
+ 422 015a 5F       		.byte	0x5f
+ 423 015b 6B000000 		.4byte	0x6b
+ 424 015f 14       		.byte	0x14
+ 425 0160 06       		.uleb128 0x6
+ 426 0161 61020000 		.4byte	.LASF28
+ 427 0165 03       		.byte	0x3
+ 428 0166 60       		.byte	0x60
+ 429 0167 6B000000 		.4byte	0x6b
+ 430 016b 15       		.byte	0x15
+ 431 016c 06       		.uleb128 0x6
+ 432 016d 69020000 		.4byte	.LASF29
+ 433 0171 03       		.byte	0x3
+ 434 0172 62       		.byte	0x62
+ 435 0173 77000000 		.4byte	0x77
+ 436 0177 16       		.byte	0x16
+ 437 0178 06       		.uleb128 0x6
+ 438 0179 62000000 		.4byte	.LASF30
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 11
+
+
+ 439 017d 03       		.byte	0x3
+ 440 017e 63       		.byte	0x63
+ 441 017f AE000000 		.4byte	0xae
+ 442 0183 18       		.byte	0x18
+ 443 0184 06       		.uleb128 0x6
+ 444 0185 D0010000 		.4byte	.LASF31
+ 445 0189 03       		.byte	0x3
+ 446 018a 64       		.byte	0x64
+ 447 018b 83000000 		.4byte	0x83
+ 448 018f 20       		.byte	0x20
+ 449 0190 06       		.uleb128 0x6
+ 450 0191 76000000 		.4byte	.LASF32
+ 451 0195 03       		.byte	0x3
+ 452 0196 65       		.byte	0x65
+ 453 0197 6B000000 		.4byte	0x6b
+ 454 019b 22       		.byte	0x22
+ 455 019c 06       		.uleb128 0x6
+ 456 019d 30000000 		.4byte	.LASF33
+ 457 01a1 03       		.byte	0x3
+ 458 01a2 66       		.byte	0x66
+ 459 01a3 6B000000 		.4byte	0x6b
+ 460 01a7 23       		.byte	0x23
+ 461 01a8 06       		.uleb128 0x6
+ 462 01a9 A4010000 		.4byte	.LASF34
+ 463 01ad 03       		.byte	0x3
+ 464 01ae 67       		.byte	0x67
+ 465 01af 9B000000 		.4byte	0x9b
+ 466 01b3 24       		.byte	0x24
+ 467 01b4 06       		.uleb128 0x6
+ 468 01b5 9A000000 		.4byte	.LASF35
+ 469 01b9 03       		.byte	0x3
+ 470 01ba 69       		.byte	0x69
+ 471 01bb 77000000 		.4byte	0x77
+ 472 01bf 28       		.byte	0x28
+ 473 01c0 00       		.byte	0
+ 474 01c1 08       		.uleb128 0x8
+ 475 01c2 80020000 		.4byte	.LASF36
+ 476 01c6 03       		.byte	0x3
+ 477 01c7 6A       		.byte	0x6a
+ 478 01c8 D6000000 		.4byte	0xd6
+ 479 01cc 09       		.uleb128 0x9
+ 480 01cd BE000000 		.4byte	.LASF37
+ 481 01d1 01       		.byte	0x1
+ 482 01d2 42       		.byte	0x42
+ 483 01d3 00000000 		.4byte	.LFB32
+ 484 01d7 08010000 		.4byte	.LFE32-.LFB32
+ 485 01db 01       		.uleb128 0x1
+ 486 01dc 9C       		.byte	0x9c
+ 487 01dd 0A       		.uleb128 0xa
+ 488 01de 0A020000 		.4byte	.LASF38
+ 489 01e2 01       		.byte	0x1
+ 490 01e3 7F       		.byte	0x7f
+ 491 01e4 00000000 		.4byte	.LFB33
+ 492 01e8 30000000 		.4byte	.LFE33-.LFB33
+ 493 01ec 01       		.uleb128 0x1
+ 494 01ed 9C       		.byte	0x9c
+ 495 01ee 0B       		.uleb128 0xb
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 12
+
+
+ 496 01ef C4010000 		.4byte	.LASF39
+ 497 01f3 01       		.byte	0x1
+ 498 01f4 2F       		.byte	0x2f
+ 499 01f5 8F000000 		.4byte	0x8f
+ 500 01f9 05       		.uleb128 0x5
+ 501 01fa 03       		.byte	0x3
+ 502 01fb 00000000 		.4byte	piOut
+ 503 01ff 0C       		.uleb128 0xc
+ 504 0200 00000000 		.4byte	.LASF40
+ 505 0204 03       		.byte	0x3
+ 506 0205 7A       		.byte	0x7a
+ 507 0206 C1010000 		.4byte	0x1c1
+ 508 020a 0C       		.uleb128 0xc
+ 509 020b D6020000 		.4byte	.LASF41
+ 510 020f 03       		.byte	0x3
+ 511 0210 7E       		.byte	0x7e
+ 512 0211 77000000 		.4byte	0x77
+ 513 0215 0C       		.uleb128 0xc
+ 514 0216 C7000000 		.4byte	.LASF42
+ 515 021a 03       		.byte	0x3
+ 516 021b 7F       		.byte	0x7f
+ 517 021c 77000000 		.4byte	0x77
+ 518 0220 0C       		.uleb128 0xc
+ 519 0221 1E000000 		.4byte	.LASF43
+ 520 0225 03       		.byte	0x3
+ 521 0226 8A       		.byte	0x8a
+ 522 0227 6B000000 		.4byte	0x6b
+ 523 022b 0B       		.uleb128 0xb
+ 524 022c 86010000 		.4byte	.LASF44
+ 525 0230 01       		.byte	0x1
+ 526 0231 31       		.byte	0x31
+ 527 0232 83000000 		.4byte	0x83
+ 528 0236 05       		.uleb128 0x5
+ 529 0237 03       		.byte	0x3
+ 530 0238 00000000 		.4byte	speedErr
+ 531 023c 0B       		.uleb128 0xb
+ 532 023d B0010000 		.4byte	.LASF45
+ 533 0241 01       		.byte	0x1
+ 534 0242 32       		.byte	0x32
+ 535 0243 83000000 		.4byte	0x83
+ 536 0247 05       		.uleb128 0x5
+ 537 0248 03       		.byte	0x3
+ 538 0249 00000000 		.4byte	speedErrPrev
+ 539 024d 0B       		.uleb128 0xb
+ 540 024e 14000000 		.4byte	.LASF46
+ 541 0252 01       		.byte	0x1
+ 542 0253 33       		.byte	0x33
+ 543 0254 83000000 		.4byte	0x83
+ 544 0258 05       		.uleb128 0x5
+ 545 0259 03       		.byte	0x3
+ 546 025a 00000000 		.4byte	speedErr2
+ 547 025e 0B       		.uleb128 0xb
+ 548 025f 03020000 		.4byte	.LASF47
+ 549 0263 01       		.byte	0x1
+ 550 0264 34       		.byte	0x34
+ 551 0265 8F000000 		.4byte	0x8f
+ 552 0269 05       		.uleb128 0x5
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 13
+
+
+ 553 026a 03       		.byte	0x3
+ 554 026b 00000000 		.4byte	result
+ 555 026f 0D       		.uleb128 0xd
+ 556 0270 6B7000   		.ascii	"kp\000"
+ 557 0273 01       		.byte	0x1
+ 558 0274 35       		.byte	0x35
+ 559 0275 77000000 		.4byte	0x77
+ 560 0279 05       		.uleb128 0x5
+ 561 027a 03       		.byte	0x3
+ 562 027b 00000000 		.4byte	kp
+ 563 027f 0D       		.uleb128 0xd
+ 564 0280 6B6900   		.ascii	"ki\000"
+ 565 0283 01       		.byte	0x1
+ 566 0284 35       		.byte	0x35
+ 567 0285 77000000 		.4byte	0x77
+ 568 0289 05       		.uleb128 0x5
+ 569 028a 03       		.byte	0x3
+ 570 028b 00000000 		.4byte	ki
+ 571 028f 00       		.byte	0
+ 572              		.section	.debug_abbrev,"",%progbits
+ 573              	.Ldebug_abbrev0:
+ 574 0000 01       		.uleb128 0x1
+ 575 0001 11       		.uleb128 0x11
+ 576 0002 01       		.byte	0x1
+ 577 0003 25       		.uleb128 0x25
+ 578 0004 0E       		.uleb128 0xe
+ 579 0005 13       		.uleb128 0x13
+ 580 0006 0B       		.uleb128 0xb
+ 581 0007 03       		.uleb128 0x3
+ 582 0008 0E       		.uleb128 0xe
+ 583 0009 1B       		.uleb128 0x1b
+ 584 000a 0E       		.uleb128 0xe
+ 585 000b 55       		.uleb128 0x55
+ 586 000c 17       		.uleb128 0x17
+ 587 000d 11       		.uleb128 0x11
+ 588 000e 01       		.uleb128 0x1
+ 589 000f 10       		.uleb128 0x10
+ 590 0010 17       		.uleb128 0x17
+ 591 0011 00       		.byte	0
+ 592 0012 00       		.byte	0
+ 593 0013 02       		.uleb128 0x2
+ 594 0014 24       		.uleb128 0x24
+ 595 0015 00       		.byte	0
+ 596 0016 0B       		.uleb128 0xb
+ 597 0017 0B       		.uleb128 0xb
+ 598 0018 3E       		.uleb128 0x3e
+ 599 0019 0B       		.uleb128 0xb
+ 600 001a 03       		.uleb128 0x3
+ 601 001b 0E       		.uleb128 0xe
+ 602 001c 00       		.byte	0
+ 603 001d 00       		.byte	0
+ 604 001e 03       		.uleb128 0x3
+ 605 001f 24       		.uleb128 0x24
+ 606 0020 00       		.byte	0
+ 607 0021 0B       		.uleb128 0xb
+ 608 0022 0B       		.uleb128 0xb
+ 609 0023 3E       		.uleb128 0x3e
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 14
+
+
+ 610 0024 0B       		.uleb128 0xb
+ 611 0025 03       		.uleb128 0x3
+ 612 0026 08       		.uleb128 0x8
+ 613 0027 00       		.byte	0
+ 614 0028 00       		.byte	0
+ 615 0029 04       		.uleb128 0x4
+ 616 002a 16       		.uleb128 0x16
+ 617 002b 00       		.byte	0
+ 618 002c 03       		.uleb128 0x3
+ 619 002d 0E       		.uleb128 0xe
+ 620 002e 3A       		.uleb128 0x3a
+ 621 002f 0B       		.uleb128 0xb
+ 622 0030 3B       		.uleb128 0x3b
+ 623 0031 05       		.uleb128 0x5
+ 624 0032 49       		.uleb128 0x49
+ 625 0033 13       		.uleb128 0x13
+ 626 0034 00       		.byte	0
+ 627 0035 00       		.byte	0
+ 628 0036 05       		.uleb128 0x5
+ 629 0037 13       		.uleb128 0x13
+ 630 0038 01       		.byte	0x1
+ 631 0039 0B       		.uleb128 0xb
+ 632 003a 0B       		.uleb128 0xb
+ 633 003b 3A       		.uleb128 0x3a
+ 634 003c 0B       		.uleb128 0xb
+ 635 003d 3B       		.uleb128 0x3b
+ 636 003e 0B       		.uleb128 0xb
+ 637 003f 01       		.uleb128 0x1
+ 638 0040 13       		.uleb128 0x13
+ 639 0041 00       		.byte	0
+ 640 0042 00       		.byte	0
+ 641 0043 06       		.uleb128 0x6
+ 642 0044 0D       		.uleb128 0xd
+ 643 0045 00       		.byte	0
+ 644 0046 03       		.uleb128 0x3
+ 645 0047 0E       		.uleb128 0xe
+ 646 0048 3A       		.uleb128 0x3a
+ 647 0049 0B       		.uleb128 0xb
+ 648 004a 3B       		.uleb128 0x3b
+ 649 004b 0B       		.uleb128 0xb
+ 650 004c 49       		.uleb128 0x49
+ 651 004d 13       		.uleb128 0x13
+ 652 004e 38       		.uleb128 0x38
+ 653 004f 0B       		.uleb128 0xb
+ 654 0050 00       		.byte	0
+ 655 0051 00       		.byte	0
+ 656 0052 07       		.uleb128 0x7
+ 657 0053 0D       		.uleb128 0xd
+ 658 0054 00       		.byte	0
+ 659 0055 03       		.uleb128 0x3
+ 660 0056 08       		.uleb128 0x8
+ 661 0057 3A       		.uleb128 0x3a
+ 662 0058 0B       		.uleb128 0xb
+ 663 0059 3B       		.uleb128 0x3b
+ 664 005a 0B       		.uleb128 0xb
+ 665 005b 49       		.uleb128 0x49
+ 666 005c 13       		.uleb128 0x13
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 15
+
+
+ 667 005d 38       		.uleb128 0x38
+ 668 005e 0B       		.uleb128 0xb
+ 669 005f 00       		.byte	0
+ 670 0060 00       		.byte	0
+ 671 0061 08       		.uleb128 0x8
+ 672 0062 16       		.uleb128 0x16
+ 673 0063 00       		.byte	0
+ 674 0064 03       		.uleb128 0x3
+ 675 0065 0E       		.uleb128 0xe
+ 676 0066 3A       		.uleb128 0x3a
+ 677 0067 0B       		.uleb128 0xb
+ 678 0068 3B       		.uleb128 0x3b
+ 679 0069 0B       		.uleb128 0xb
+ 680 006a 49       		.uleb128 0x49
+ 681 006b 13       		.uleb128 0x13
+ 682 006c 00       		.byte	0
+ 683 006d 00       		.byte	0
+ 684 006e 09       		.uleb128 0x9
+ 685 006f 2E       		.uleb128 0x2e
+ 686 0070 00       		.byte	0
+ 687 0071 3F       		.uleb128 0x3f
+ 688 0072 19       		.uleb128 0x19
+ 689 0073 03       		.uleb128 0x3
+ 690 0074 0E       		.uleb128 0xe
+ 691 0075 3A       		.uleb128 0x3a
+ 692 0076 0B       		.uleb128 0xb
+ 693 0077 3B       		.uleb128 0x3b
+ 694 0078 0B       		.uleb128 0xb
+ 695 0079 27       		.uleb128 0x27
+ 696 007a 19       		.uleb128 0x19
+ 697 007b 11       		.uleb128 0x11
+ 698 007c 01       		.uleb128 0x1
+ 699 007d 12       		.uleb128 0x12
+ 700 007e 06       		.uleb128 0x6
+ 701 007f 40       		.uleb128 0x40
+ 702 0080 18       		.uleb128 0x18
+ 703 0081 9642     		.uleb128 0x2116
+ 704 0083 19       		.uleb128 0x19
+ 705 0084 00       		.byte	0
+ 706 0085 00       		.byte	0
+ 707 0086 0A       		.uleb128 0xa
+ 708 0087 2E       		.uleb128 0x2e
+ 709 0088 00       		.byte	0
+ 710 0089 3F       		.uleb128 0x3f
+ 711 008a 19       		.uleb128 0x19
+ 712 008b 03       		.uleb128 0x3
+ 713 008c 0E       		.uleb128 0xe
+ 714 008d 3A       		.uleb128 0x3a
+ 715 008e 0B       		.uleb128 0xb
+ 716 008f 3B       		.uleb128 0x3b
+ 717 0090 0B       		.uleb128 0xb
+ 718 0091 27       		.uleb128 0x27
+ 719 0092 19       		.uleb128 0x19
+ 720 0093 11       		.uleb128 0x11
+ 721 0094 01       		.uleb128 0x1
+ 722 0095 12       		.uleb128 0x12
+ 723 0096 06       		.uleb128 0x6
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 16
+
+
+ 724 0097 40       		.uleb128 0x40
+ 725 0098 18       		.uleb128 0x18
+ 726 0099 9742     		.uleb128 0x2117
+ 727 009b 19       		.uleb128 0x19
+ 728 009c 00       		.byte	0
+ 729 009d 00       		.byte	0
+ 730 009e 0B       		.uleb128 0xb
+ 731 009f 34       		.uleb128 0x34
+ 732 00a0 00       		.byte	0
+ 733 00a1 03       		.uleb128 0x3
+ 734 00a2 0E       		.uleb128 0xe
+ 735 00a3 3A       		.uleb128 0x3a
+ 736 00a4 0B       		.uleb128 0xb
+ 737 00a5 3B       		.uleb128 0x3b
+ 738 00a6 0B       		.uleb128 0xb
+ 739 00a7 49       		.uleb128 0x49
+ 740 00a8 13       		.uleb128 0x13
+ 741 00a9 3F       		.uleb128 0x3f
+ 742 00aa 19       		.uleb128 0x19
+ 743 00ab 02       		.uleb128 0x2
+ 744 00ac 18       		.uleb128 0x18
+ 745 00ad 00       		.byte	0
+ 746 00ae 00       		.byte	0
+ 747 00af 0C       		.uleb128 0xc
+ 748 00b0 34       		.uleb128 0x34
+ 749 00b1 00       		.byte	0
+ 750 00b2 03       		.uleb128 0x3
+ 751 00b3 0E       		.uleb128 0xe
+ 752 00b4 3A       		.uleb128 0x3a
+ 753 00b5 0B       		.uleb128 0xb
+ 754 00b6 3B       		.uleb128 0x3b
+ 755 00b7 0B       		.uleb128 0xb
+ 756 00b8 49       		.uleb128 0x49
+ 757 00b9 13       		.uleb128 0x13
+ 758 00ba 3F       		.uleb128 0x3f
+ 759 00bb 19       		.uleb128 0x19
+ 760 00bc 3C       		.uleb128 0x3c
+ 761 00bd 19       		.uleb128 0x19
+ 762 00be 00       		.byte	0
+ 763 00bf 00       		.byte	0
+ 764 00c0 0D       		.uleb128 0xd
+ 765 00c1 34       		.uleb128 0x34
+ 766 00c2 00       		.byte	0
+ 767 00c3 03       		.uleb128 0x3
+ 768 00c4 08       		.uleb128 0x8
+ 769 00c5 3A       		.uleb128 0x3a
+ 770 00c6 0B       		.uleb128 0xb
+ 771 00c7 3B       		.uleb128 0x3b
+ 772 00c8 0B       		.uleb128 0xb
+ 773 00c9 49       		.uleb128 0x49
+ 774 00ca 13       		.uleb128 0x13
+ 775 00cb 3F       		.uleb128 0x3f
+ 776 00cc 19       		.uleb128 0x19
+ 777 00cd 02       		.uleb128 0x2
+ 778 00ce 18       		.uleb128 0x18
+ 779 00cf 00       		.byte	0
+ 780 00d0 00       		.byte	0
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 17
+
+
+ 781 00d1 00       		.byte	0
+ 782              		.section	.debug_aranges,"",%progbits
+ 783 0000 24000000 		.4byte	0x24
+ 784 0004 0200     		.2byte	0x2
+ 785 0006 00000000 		.4byte	.Ldebug_info0
+ 786 000a 04       		.byte	0x4
+ 787 000b 00       		.byte	0
+ 788 000c 0000     		.2byte	0
+ 789 000e 0000     		.2byte	0
+ 790 0010 00000000 		.4byte	.LFB32
+ 791 0014 08010000 		.4byte	.LFE32-.LFB32
+ 792 0018 00000000 		.4byte	.LFB33
+ 793 001c 30000000 		.4byte	.LFE33-.LFB33
+ 794 0020 00000000 		.4byte	0
+ 795 0024 00000000 		.4byte	0
+ 796              		.section	.debug_ranges,"",%progbits
+ 797              	.Ldebug_ranges0:
+ 798 0000 00000000 		.4byte	.LFB32
+ 799 0004 08010000 		.4byte	.LFE32
+ 800 0008 00000000 		.4byte	.LFB33
+ 801 000c 30000000 		.4byte	.LFE33
+ 802 0010 00000000 		.4byte	0
+ 803 0014 00000000 		.4byte	0
+ 804              		.section	.debug_line,"",%progbits
+ 805              	.Ldebug_line0:
+ 806 0000 90000000 		.section	.debug_str,"MS",%progbits,1
+ 806      02005100 
+ 806      00000201 
+ 806      FB0E0D00 
+ 806      01010101 
+ 807              	.LASF40:
+ 808 0000 55495F44 		.ascii	"UI_Data\000"
+ 808      61746100 
+ 809              	.LASF25:
+ 810 0008 6D617853 		.ascii	"maxSpeedRpm\000"
+ 810      70656564 
+ 810      52706D00 
+ 811              	.LASF46:
+ 812 0014 73706565 		.ascii	"speedErr2\000"
+ 812      64457272 
+ 812      3200
+ 813              	.LASF43:
+ 814 001e 64757479 		.ascii	"dutyCycle\000"
+ 814      4379636C 
+ 814      6500
+ 815              	.LASF15:
+ 816 0028 666C6F61 		.ascii	"float64\000"
+ 816      74363400 
+ 817              	.LASF33:
+ 818 0030 70726F67 		.ascii	"programStateManchineState\000"
+ 818      72616D53 
+ 818      74617465 
+ 818      4D616E63 
+ 818      68696E65 
+ 819              	.LASF26:
+ 820 004a 6D696E53 		.ascii	"minSpeedRpm\000"
+ 820      70656564 
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 18
+
+
+ 820      52706D00 
+ 821              	.LASF24:
+ 822 0056 73706565 		.ascii	"speedRpmRef\000"
+ 822      6452706D 
+ 822      52656600 
+ 823              	.LASF30:
+ 824 0062 616E6775 		.ascii	"angularPos\000"
+ 824      6C617250 
+ 824      6F7300
+ 825              	.LASF4:
+ 826 006d 6C6F6E67 		.ascii	"long int\000"
+ 826      20696E74 
+ 826      00
+ 827              	.LASF32:
+ 828 0076 6368616E 		.ascii	"changeDirection\000"
+ 828      67654469 
+ 828      72656374 
+ 828      696F6E00 
+ 829              	.LASF2:
+ 830 0086 73686F72 		.ascii	"short int\000"
+ 830      7420696E 
+ 830      7400
+ 831              	.LASF27:
+ 832 0090 706F6C65 		.ascii	"polePairs\000"
+ 832      50616972 
+ 832      7300
+ 833              	.LASF35:
+ 834 009a 6D6F746F 		.ascii	"motorWindupOvercurrentDisable\000"
+ 834      7257696E 
+ 834      6475704F 
+ 834      76657263 
+ 834      75727265 
+ 835              	.LASF14:
+ 836 00b8 666C6F61 		.ascii	"float\000"
+ 836      7400
+ 837              	.LASF37:
+ 838 00be 53706565 		.ascii	"SpeedPID\000"
+ 838      64504944 
+ 838      00
+ 839              	.LASF42:
+ 840 00c7 73706565 		.ascii	"speedCur\000"
+ 840      64437572 
+ 840      00
+ 841              	.LASF22:
+ 842 00d0 67656172 		.ascii	"gearRatio\000"
+ 842      52617469 
+ 842      6F00
+ 843              	.LASF11:
+ 844 00da 696E7431 		.ascii	"int16\000"
+ 844      3600
+ 845              	.LASF5:
+ 846 00e0 6C6F6E67 		.ascii	"long unsigned int\000"
+ 846      20756E73 
+ 846      69676E65 
+ 846      6420696E 
+ 846      7400
+ 847              	.LASF12:
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 19
+
+
+ 848 00f2 696E7433 		.ascii	"int32\000"
+ 848      3200
+ 849              	.LASF48:
+ 850 00f8 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 850      43313120 
+ 850      352E342E 
+ 850      31203230 
+ 850      31363036 
+ 851 012b 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m0 -mthumb -g -O"
+ 851      20726576 
+ 851      6973696F 
+ 851      6E203233 
+ 851      37373135 
+ 852 015e 30202D66 		.ascii	"0 -ffunction-sections -ffat-lto-objects\000"
+ 852      66756E63 
+ 852      74696F6E 
+ 852      2D736563 
+ 852      74696F6E 
+ 853              	.LASF44:
+ 854 0186 73706565 		.ascii	"speedErr\000"
+ 854      64457272 
+ 854      00
+ 855              	.LASF1:
+ 856 018f 756E7369 		.ascii	"unsigned char\000"
+ 856      676E6564 
+ 856      20636861 
+ 856      7200
+ 857              	.LASF16:
+ 858 019d 646F7562 		.ascii	"double\000"
+ 858      6C6500
+ 859              	.LASF34:
+ 860 01a4 73776974 		.ascii	"switchAngle\000"
+ 860      6368416E 
+ 860      676C6500 
+ 861              	.LASF45:
+ 862 01b0 73706565 		.ascii	"speedErrPrev\000"
+ 862      64457272 
+ 862      50726576 
+ 862      00
+ 863              	.LASF10:
+ 864 01bd 75696E74 		.ascii	"uint16\000"
+ 864      313600
+ 865              	.LASF39:
+ 866 01c4 70694F75 		.ascii	"piOut\000"
+ 866      7400
+ 867              	.LASF21:
+ 868 01ca 74657374 		.ascii	"test2\000"
+ 868      3200
+ 869              	.LASF31:
+ 870 01d0 7370696E 		.ascii	"spinCount\000"
+ 870      436F756E 
+ 870      7400
+ 871              	.LASF20:
+ 872 01da 74657374 		.ascii	"test\000"
+ 872      00
+ 873              	.LASF8:
+ 874 01df 756E7369 		.ascii	"unsigned int\000"
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 20
+
+
+ 874      676E6564 
+ 874      20696E74 
+ 874      00
+ 875              	.LASF7:
+ 876 01ec 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 876      206C6F6E 
+ 876      6720756E 
+ 876      7369676E 
+ 876      65642069 
+ 877              	.LASF47:
+ 878 0203 72657375 		.ascii	"result\000"
+ 878      6C7400
+ 879              	.LASF38:
+ 880 020a 72657365 		.ascii	"resetPIOut\000"
+ 880      7450494F 
+ 880      757400
+ 881              	.LASF50:
+ 882 0215 443A5C53 		.ascii	"D:\\Sensored BLDC Motor Control\\control_v3.cydsn\000"
+ 882      656E736F 
+ 882      72656420 
+ 882      424C4443 
+ 882      204D6F74 
+ 883              	.LASF19:
+ 884 0245 73697A65 		.ascii	"sizetype\000"
+ 884      74797065 
+ 884      00
+ 885              	.LASF6:
+ 886 024e 6C6F6E67 		.ascii	"long long int\000"
+ 886      206C6F6E 
+ 886      6720696E 
+ 886      7400
+ 887              	.LASF17:
+ 888 025c 63686172 		.ascii	"char\000"
+ 888      00
+ 889              	.LASF28:
+ 890 0261 6D617843 		.ascii	"maxCurr\000"
+ 890      75727200 
+ 891              	.LASF29:
+ 892 0269 74696D65 		.ascii	"timeBetweenHallSamples\000"
+ 892      42657477 
+ 892      65656E48 
+ 892      616C6C53 
+ 892      616D706C 
+ 893              	.LASF36:
+ 894 0280 55495F44 		.ascii	"UI_DATA\000"
+ 894      41544100 
+ 895              	.LASF23:
+ 896 0288 73706565 		.ascii	"speedRpm\000"
+ 896      6452706D 
+ 896      00
+ 897              	.LASF9:
+ 898 0291 75696E74 		.ascii	"uint8\000"
+ 898      3800
+ 899              	.LASF49:
+ 900 0297 73706565 		.ascii	"speedloop.c\000"
+ 900      646C6F6F 
+ 900      702E6300 
+ARM GAS  C:\Users\IlyR\AppData\Local\Temp\cc4C3nLa.s 			page 21
+
+
+ 901              	.LASF13:
+ 902 02a3 666C6F61 		.ascii	"float32\000"
+ 902      74333200 
+ 903              	.LASF18:
+ 904 02ab 6C6F6E67 		.ascii	"long double\000"
+ 904      20646F75 
+ 904      626C6500 
+ 905              	.LASF0:
+ 906 02b7 7369676E 		.ascii	"signed char\000"
+ 906      65642063 
+ 906      68617200 
+ 907              	.LASF3:
+ 908 02c3 73686F72 		.ascii	"short unsigned int\000"
+ 908      7420756E 
+ 908      7369676E 
+ 908      65642069 
+ 908      6E7400
+ 909              	.LASF41:
+ 910 02d6 73706565 		.ascii	"speedRef\000"
+ 910      64526566 
+ 910      00
+ 911              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

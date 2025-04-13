@@ -1,0 +1,5 @@
+  ;----------------RX8 packet structure------------------------------------------------------------
+;Header = {0x55}
+;Data = {4 bytes int variable}  ;Tail = {0xAA}
+;----------------------------------------------------------------------------------------------
+RX8 [h=55] @1test @0test @1test2 @0test2 @1programStateManchineState @0programStateManchineState @1speedRpm @0speedRpm @1speedRpmRef @speedRpmRef @1Dir @0Dir @1angularPos @0angularPos [t=AA]
